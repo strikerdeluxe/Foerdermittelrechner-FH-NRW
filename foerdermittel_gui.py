@@ -372,6 +372,13 @@ class FoerdermittelGUI:
                                      style='Success.TButton')
         self.calc_button.pack(side='left', padx=(0, 10))
         
+        # Berechnungsmethode erklären Button
+        explain_button = ttk.Button(button_frame,
+                                   text="❓ Berechnungsmethode erklären",
+                                   command=self.show_calculation_method,
+                                   style='TButton')
+        explain_button.pack(side='left', padx=(0, 10))
+        
         # Progress Bar
         self.progress = ttk.Progressbar(button_frame, 
                                        mode='indeterminate',
@@ -498,7 +505,7 @@ class FoerdermittelGUI:
         
         # Copyright Titel - Prominent angezeigt
         copyright_title = ttk.Label(main_frame,
-                                   text="© 2024 Fördermittel-Rechner",
+                                   text="© 2025 Fördermittel-Rechner",
                                    font=('Segoe UI', 18, 'bold'),
                                    foreground=self.colors['primary'])
         copyright_title.pack(pady=(0, 15))
@@ -508,7 +515,7 @@ class FoerdermittelGUI:
         copyright_frame.pack(fill='x', pady=(0, 15))
         
         copyright_text = ttk.Label(copyright_frame,
-                                  text="Copyright © 2024 Marco Benta\nAlle Rechte vorbehalten.\n\nDiese Software ist unter der MIT-Lizenz\nlizenziert und darf frei verwendet werden.",
+                                  text="Copyright © 2025 Marco Benta\nAlle Rechte vorbehalten.\n\nDiese Software ist unter der MIT-Lizenz\nlizenziert und darf frei verwendet werden.",
                                   font=('Segoe UI', 11),
                                   justify='center',
                                   foreground=self.colors['text'])
@@ -544,7 +551,7 @@ class FoerdermittelGUI:
         version_frame = ttk.Frame(dev_frame)
         version_frame.pack(fill='x', pady=3)
         ttk.Label(version_frame, text="Version:", font=('Segoe UI', 10, 'bold')).pack(side='left')
-        ttk.Label(version_frame, text="1.0 (2024)", font=('Segoe UI', 10)).pack(side='left', padx=(10, 0))
+        ttk.Label(version_frame, text="0.8 (2025)", font=('Segoe UI', 10)).pack(side='left', padx=(10, 0))
         
         # Schließen Button
         close_button = ttk.Button(main_frame,
@@ -555,6 +562,138 @@ class FoerdermittelGUI:
         
         # Fokus auf das Fenster setzen
         copyright_window.focus_set()
+    
+    def show_calculation_method(self):
+        """Zeigt eine verständliche Erklärung der Berechnungsmethode an"""
+        method_window = tk.Toplevel(self.root)
+        method_window.title("Berechnungsmethode - Fördermittelverteilung")
+        method_window.geometry("700x600")
+        method_window.resizable(True, True)
+        
+        # Fenster zentrieren
+        method_window.transient(self.root)
+        method_window.grab_set()
+        
+        # Hauptframe mit Scrollbar
+        main_frame = ttk.Frame(method_window)
+        main_frame.pack(fill='both', expand=True, padx=20, pady=20)
+        
+        # Canvas und Scrollbar für scrollbaren Inhalt
+        canvas = tk.Canvas(main_frame, bg=self.colors['background'])
+        scrollbar = ttk.Scrollbar(main_frame, orient='vertical', command=canvas.yview)
+        scrollable_frame = ttk.Frame(canvas)
+        
+        scrollable_frame.bind(
+            '<Configure>',
+            lambda e: canvas.configure(scrollregion=canvas.bbox('all'))
+        )
+        
+        canvas.create_window((0, 0), window=scrollable_frame, anchor='nw')
+        canvas.configure(yscrollcommand=scrollbar.set)
+        
+        # Titel
+        title_label = ttk.Label(scrollable_frame,
+                               text="🔢 Wie funktioniert die Fördermittelverteilung?",
+                               font=('Segoe UI', 16, 'bold'),
+                               foreground=self.colors['primary'])
+        title_label.pack(pady=(0, 20))
+        
+        # Übersicht
+        overview_frame = ttk.LabelFrame(scrollable_frame, text="Überblick", padding=15)
+        overview_frame.pack(fill='x', pady=(0, 15))
+        
+        overview_text = ttk.Label(overview_frame,
+                                  text="Die Fördermittelverteilung erfolgt nach einem iterativen Verfahren, das historische Werte und aktuelle Bedarfe berücksichtigt.",
+                                  font=('Segoe UI', 11),
+                                  wraplength=600,
+                                  justify='left')
+        overview_text.pack(anchor='w')
+        
+        # Schritt 1
+        step1_frame = ttk.LabelFrame(scrollable_frame, text="Schritt 1: Sockelbetrag berechnen", padding=15)
+        step1_frame.pack(fill='x', pady=(0, 15))
+        
+        step1_text = ttk.Label(step1_frame,
+                               text="• Jede Kommune erhält einen Sockelbetrag basierend auf ihrem Förderwert aus 2019\n• Sockelbetrag = Wert 2019 × Sockelbetrag-Prozentsatz (Standard: 50%)\n• Der Sockelbetrag bildet die Grundlage der Förderung",
+                               font=('Segoe UI', 10),
+                               wraplength=600,
+                               justify='left')
+        step1_text.pack(anchor='w')
+        
+        # Schritt 2
+        step2_frame = ttk.LabelFrame(scrollable_frame, text="Schritt 2: Restbudget für U3-Kinder verteilen", padding=15)
+        step2_frame.pack(fill='x', pady=(0, 15))
+        
+        step2_text = ttk.Label(step2_frame,
+                              text="• Restbudget = Gesamtsumme - Summe aller Sockelbeträge\n• Das Restbudget wird proportional zur Anzahl der U3-Kinder im SGB-II-Bezug verteilt\n• Multiplikator = Restbudget ÷ Gesamtzahl U3-Kinder\n• U3-Anteil je Kommune = Anzahl U3-Kinder × Multiplikator",
+                              font=('Segoe UI', 10),
+                              wraplength=600,
+                              justify='left')
+        step2_text.pack(anchor='w')
+        
+        # Schritt 3
+        step3_frame = ttk.LabelFrame(scrollable_frame, text="Schritt 3: Mindestbetrag prüfen (Iterativ)", padding=15)
+        step3_frame.pack(fill='x', pady=(0, 15))
+        
+        step3_text = ttk.Label(step3_frame,
+                              text="• Zwischensumme = Sockelbetrag + U3-Anteil\n• Falls Zwischensumme < Mindestbetrag: Kommune wird auf Mindestbetrag fixiert\n• Das Budget wird neu auf die verbleibenden Kommunen verteilt\n• Dieser Prozess wiederholt sich, bis alle Kommunen mindestens den Mindestbetrag erhalten",
+                              font=('Segoe UI', 10),
+                              wraplength=600,
+                              justify='left')
+        step3_text.pack(anchor='w')
+        
+        # Schritt 4
+        step4_frame = ttk.LabelFrame(scrollable_frame, text="Schritt 4: Rundung und Ausgleich", padding=15)
+        step4_frame.pack(fill='x', pady=(0, 15))
+        
+        step4_text = ttk.Label(step4_frame,
+                              text="• Alle Beträge werden auf ganze Euro gerundet\n• Rundungsdifferenzen werden bei der Kommune mit der höchsten Fördersumme ausgeglichen\n• So wird sichergestellt, dass die Gesamtsumme exakt eingehalten wird",
+                              font=('Segoe UI', 10),
+                              wraplength=600,
+                              justify='left')
+        step4_text.pack(anchor='w')
+        
+        # Beispiel
+        example_frame = ttk.LabelFrame(scrollable_frame, text="Beispiel", padding=15)
+        example_frame.pack(fill='x', pady=(0, 15))
+        
+        example_text = ttk.Label(example_frame,
+                                text="Gesamtsumme: 500.000 €, Mindestbetrag: 12.500 €, Sockelbetrag: 50%\n\nKommune A: Wert 2019: 20.000 €, U3-Kinder: 10\n→ Sockelbetrag: 10.000 €\n\nKommune B: Wert 2019: 5.000 €, U3-Kinder: 5\n→ Sockelbetrag: 2.500 € (< Mindestbetrag)\n\nRunde 1: Kommune B wird auf 12.500 € fixiert\nRunde 2: Restbudget wird neu auf Kommune A verteilt",
+                                font=('Consolas', 9),
+                                wraplength=600,
+                                justify='left',
+                                background=self.colors['surface'])
+        example_text.pack(anchor='w', fill='x')
+        
+        # Eigenschaften
+        properties_frame = ttk.LabelFrame(scrollable_frame, text="Eigenschaften der Methode", padding=15)
+        properties_frame.pack(fill='x', pady=(0, 20))
+        
+        properties_text = ttk.Label(properties_frame,
+                                   text="• Berücksichtigung historischer Förderung\n• Verteilung nach aktuellen U3-Zahlen\n• Mindestbetrag für alle Kommunen\n• Exakte Einhaltung der Gesamtsumme\n• Nachvollziehbare Berechnung",
+                                   font=('Segoe UI', 10),
+                                   wraplength=600,
+                                   justify='left')
+        properties_text.pack(anchor='w')
+        
+        # Schließen Button
+        close_button = ttk.Button(scrollable_frame,
+                                 text="Verstanden - Fenster schließen",
+                                 command=method_window.destroy,
+                                 style='Primary.TButton')
+        close_button.pack(pady=(20, 0))
+        
+        # Canvas und Scrollbar packen
+        canvas.pack(side='left', fill='both', expand=True)
+        scrollbar.pack(side='right', fill='y')
+        
+        # Mausrad-Scrolling aktivieren
+        def _on_mousewheel(event):
+            canvas.yview_scroll(int(-1*(event.delta/120)), "units")
+        canvas.bind_all("<MouseWheel>", _on_mousewheel)
+        
+        # Fokus auf das Fenster setzen
+        method_window.focus_set()
         
     def update_status(self, message, color=None):
         """Aktualisiert die Status-Anzeige"""
