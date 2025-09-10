@@ -492,8 +492,8 @@ class FoerdermittelGUI:
         """Zeigt Informationen über die Anwendung an"""
         copyright_window = tk.Toplevel(self.root)
         copyright_window.title("Über diese Anwendung")
-        copyright_window.geometry("500x450")
-        copyright_window.resizable(False, False)
+        copyright_window.geometry("600x650")
+        copyright_window.resizable(True, True)
         
         # Fenster zentrieren
         copyright_window.transient(self.root)
@@ -552,6 +552,47 @@ class FoerdermittelGUI:
         version_frame.pack(fill='x', pady=3)
         ttk.Label(version_frame, text="Version:", font=('Segoe UI', 10, 'bold')).pack(side='left')
         ttk.Label(version_frame, text="0.8 (2025)", font=('Segoe UI', 10)).pack(side='left', padx=(10, 0))
+        
+        # Open-Source-Komponenten
+        opensource_frame = ttk.LabelFrame(main_frame, text="Verwendete Open-Source-Programme", padding=15)
+        opensource_frame.pack(fill='both', expand=True, pady=(0, 15))
+        
+        # Scrollable Text für Open-Source-Informationen
+        text_frame = ttk.Frame(opensource_frame)
+        text_frame.pack(fill='both', expand=True)
+        
+        opensource_text = tk.Text(text_frame,
+                                 height=8,
+                                 wrap='word',
+                                 font=('Segoe UI', 9),
+                                 bg=self.colors['surface'],
+                                 relief='solid',
+                                 borderwidth=1)
+        
+        scrollbar_os = ttk.Scrollbar(text_frame, orient='vertical', command=opensource_text.yview)
+        opensource_text.configure(yscrollcommand=scrollbar_os.set)
+        
+        opensource_content = """Diese Anwendung basiert auf folgenden Open-Source-Komponenten:
+
+• Python 3.x (Python Software Foundation License)
+  Copyright © 2001-2024 Python Software Foundation
+
+• Tkinter GUI Framework (Python Software Foundation License)
+  Teil der Python-Standardbibliothek
+
+• OpenPyXL Excel-Bibliothek (MIT License)
+  Copyright © 2010 openpyxl
+
+• PyInstaller (GPL v2 mit Runtime Exception)
+  Copyright © 2005-2024 PyInstaller Development Team
+
+Vollständige Lizenzinformationen finden Sie in den Dateien LICENSE.md und THIRD-PARTY-NOTICES.md im Programmverzeichnis."""
+        
+        opensource_text.insert('1.0', opensource_content)
+        opensource_text.config(state='disabled')  # Nur lesbar
+        
+        opensource_text.pack(side='left', fill='both', expand=True)
+        scrollbar_os.pack(side='right', fill='y')
         
         # Schließen Button
         close_button = ttk.Button(main_frame,
@@ -676,6 +717,7 @@ class FoerdermittelGUI:
                                    justify='left')
         properties_text.pack(anchor='w')
         
+
         # Schließen Button
         close_button = ttk.Button(scrollable_frame,
                                  text="Verstanden - Fenster schließen",
