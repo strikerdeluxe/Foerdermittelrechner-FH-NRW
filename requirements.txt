@@ -1,0 +1,6 @@
+# Python-Pakete für den Fördermittel-Rechner
+# Installation: pip install -r requirements.txt
+# (tkinter gehört zu Python selbst; unter Linux ggf. per "sudo apt install python3-tk")
+pandas>=1.3
+numpy>=1.21
+openpyxl>=3.0.9

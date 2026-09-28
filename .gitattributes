@@ -1,0 +1,2 @@
+# Shell-Skripte immer mit Unix-Zeilenenden, sonst laufen sie unter Linux nicht
+*.sh text eol=lf

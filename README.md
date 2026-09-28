@@ -8,6 +8,7 @@ Ein Python-basiertes Tool zur Berechnung und Verteilung von Fördermitteln für 
 - **Excel-Integration**: Import und Export von Excel-Dateien
 - **Automatische Berechnung**: Verteilung von Fördermitteln basierend auf verschiedenen Parametern
 - **Standalone-Executable**: Fertige EXE-Datei für Windows ohne Python-Installation
+- **Linux-Unterstützung**: Startskript und Eintrag im Anwendungsmenü (Ubuntu 24.04 und darauf basierende Systeme wie Zorin OS 18)
 
 ## Dateien
 
@@ -16,23 +17,44 @@ Ein Python-basiertes Tool zur Berechnung und Verteilung von Fördermitteln für 
 - `rup.xlsx` - Referenzdaten für Berechnungen
 - `foerdermittel_beispiel.xlsx` - Beispieldaten
 - `dist/Foerdermittel-Rechner.exe` - Fertige Windows-Executable
+- `requirements.txt` - Benötigte Python-Pakete
+- `start.sh` / `install_linux.sh` - Starten bzw. Einrichten unter Linux
+- `start_gui.bat` / `start.bat` - Starten unter Windows (GUI bzw. Konsole)
+- `assets/icon.png` - App-Icon
 
 ## Installation
 
-### Für Entwickler
+### Linux (Ubuntu, Zorin OS und ähnliche)
+```bash
+# Systempakete (einmalig)
+sudo apt install git python3-venv python3-tk
+
+# Repository klonen
+git clone https://github.com/strikerdeluxe/Foerdermittelrechner-FH-NRW.git
+cd Foerdermittelrechner-FH-NRW
+
+# Python-Umgebung anlegen und App ins Anwendungsmenü eintragen
+./install_linux.sh
+```
+
+Danach startet die App über das Anwendungsmenü („Fördermittel-Rechner“) oder im Terminal mit `./start.sh`.
+Die Python-Pakete liegen in einer virtuellen Umgebung (`.venv/`) im Projektordner, das System bleibt unverändert.
+`./start.sh --konsole` startet die Konsolen-Version, `./install_linux.sh --entfernen` entfernt den Menüeintrag.
+
+### Windows (Entwickler)
 ```bash
 # Repository klonen
-git clone <repository-url>
-cd föder
+git clone https://github.com/strikerdeluxe/Foerdermittelrechner-FH-NRW.git
+cd Foerdermittelrechner-FH-NRW
 
-# Python-Abhängigkeiten installieren
-pip install pandas openpyxl tkinter
+# Python-Abhängigkeiten installieren (tkinter ist bei Python dabei)
+pip install -r requirements.txt
 
 # GUI-Version starten
 python foerdermittel_gui.py
 ```
 
-### Für Endbenutzer
+### Für Endbenutzer (Windows)
 Einfach die `Foerdermittel-Rechner.exe` aus dem `dist/` Ordner herunterladen und ausführen.
 
 ## Verwendung

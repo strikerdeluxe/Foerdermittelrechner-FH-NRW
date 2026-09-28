@@ -16,6 +16,12 @@ Doppelklick auf: start_gui.bat
 python foerdermittel_gui.py
 ```
 
+**Option 3: Linux**
+```bash
+./install_linux.sh   # einmalig: Python-Umgebung + Eintrag im Anwendungsmenü
+./start.sh           # danach: starten (oder über das Anwendungsmenü)
+```
+
 ## 📋 Funktionsübersicht
 
 ### 🎯 Hauptfunktionen
@@ -141,6 +147,7 @@ Zeigt für jede Kommune:
 ### Systemvoraussetzungen
 - **Python 3.7+** (empfohlen: Python 3.9+)
 - **Windows 10/11** (getestet)
+- **Linux**: Ubuntu 24.04 und darauf basierende Systeme wie Zorin OS 18 (Systempakete `python3-tk` und `python3-venv`)
 
 ### Python-Bibliotheken
 ```
@@ -152,8 +159,9 @@ tkinter (meist vorinstalliert)
 
 ### Installation der Abhängigkeiten
 ```bash
-pip install pandas numpy openpyxl
+pip install -r requirements.txt
 ```
+Unter Linux übernimmt `./start.sh` das automatisch (virtuelle Umgebung in `.venv/`).
 
 ## 📁 Dateistruktur
 
@@ -190,6 +198,9 @@ föder/
 
 **Problem: "Modul 'pandas' nicht gefunden"**
 - Lösung: `pip install pandas numpy openpyxl` ausführen
+
+**Problem (Linux): "No module named 'tkinter'" oder "venv fehlt"**
+- Lösung: `sudo apt install python3-tk python3-venv` ausführen, danach `./start.sh` erneut starten
 
 **Problem: GUI startet nicht**
 - Lösung: Kommandozeile öffnen und `python foerdermittel_gui.py` ausführen
