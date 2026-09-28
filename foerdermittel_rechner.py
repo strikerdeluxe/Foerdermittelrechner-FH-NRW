@@ -43,11 +43,13 @@ class FoerdermittelRechner:
         # Erstelle DataFrame
         df = pd.DataFrame(self.kommunen_daten)
         df['Sockelbetrag'] = df['Wert_2019'] * self.sockelbetrag_prozent
-        df['U3_Anteil'] = 0
-        df['Zwischensumme'] = 0
-        df['Endbetrag'] = 0
+        # Betragsspalten als Kommazahlen (0.0) anlegen: pandas ab Version 3 bricht
+        # sonst ab, wenn später Kommazahlen in eine Ganzzahl-Spalte geschrieben werden.
+        df['U3_Anteil'] = 0.0
+        df['Zwischensumme'] = 0.0
+        df['Endbetrag'] = 0.0
         df['Runde'] = 0
-        df['Erste_Berechnung'] = 0
+        df['Erste_Berechnung'] = 0.0
         
         # Tracking für Iterationen
         fixierte_kommunen = set()
