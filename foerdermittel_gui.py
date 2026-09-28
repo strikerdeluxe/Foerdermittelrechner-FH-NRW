@@ -1,10 +1,30 @@
 import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
+from tkinter import font as tkfont
 import pandas as pd
 from foerdermittel_rechner import FoerdermittelRechner
 import threading
 from datetime import datetime
 import os
+import sys
+
+# Programmverzeichnis (auch für die mit PyInstaller gepackte Version)
+APP_DIR = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
+
+# Segoe UI und Consolas gibt es nur unter Windows. Auf anderen Systemen wird die
+# erste installierte Alternative verwendet, notfalls die Standardschrift von Tk.
+UI_FONT_CANDIDATES = ('Segoe UI', 'Inter', 'Ubuntu', 'Noto Sans', 'Cantarell', 'DejaVu Sans')
+MONO_FONT_CANDIDATES = ('Consolas', 'Ubuntu Mono', 'Noto Sans Mono', 'DejaVu Sans Mono', 'Liberation Mono')
+
+
+def pick_font(candidates, fallback):
+    """Liefert die erste installierte Schriftfamilie aus candidates."""
+    available = set(tkfont.families())
+    for family in candidates:
+        if family in available:
+            return family
+    return tkfont.nametofont(fallback).actual('family')
+
 
 class FoerdermittelGUI:
     def __init__(self, root):
@@ -12,22 +32,34 @@ class FoerdermittelGUI:
         self.root.title("Fördermittel-Verteilungsrechner")
         self.root.geometry("1200x800")
         self.root.minsize(800, 600)
-        
+
+        self.ui_font = pick_font(UI_FONT_CANDIDATES, 'TkDefaultFont')
+        self.mono_font = pick_font(MONO_FONT_CANDIDATES, 'TkFixedFont')
+
         # Moderne Farben und Styles
         self.colors = {
             'primary': '#E3F2FD',  # Helles Blau für dunkle Schrift
-            'secondary': '#A23B72', 
+            'secondary': '#A23B72',
             'success': '#FFF3E0',  # Helles Orange für dunkle Schrift
             'background': '#F8F9FA',
             'surface': '#FFFFFF',
             'text': '#212529',
-            'text_secondary': '#6C757D'
+            'text_secondary': '#6C757D',
+            # Schriftfarben: primary/success sind Hintergrundfarben und als
+            # Schrift auf hellem Grund kaum lesbar
+            'accent': '#1565C0',   # Dunkelblau für Überschriften und Kennzahlen
+            'ok': '#2E7D32'        # Dunkelgrün für Erfolgsmeldungen
         }
-        
+
         # Rechner-Instanz
         self.rechner = None
         self.kommunen_data = []
-        
+
+        # Mausrad-Scrollen für scrollbare Bereiche (Windows, macOS und Linux)
+        self._scroll_canvases = set()
+        for sequence in ('<MouseWheel>', '<Button-4>', '<Button-5>'):
+            self.root.bind_all(sequence, self._on_mousewheel, add='+')
+
         # GUI Setup
         self.setup_styles()
         self.create_widgets()
@@ -39,16 +71,31 @@ class FoerdermittelGUI:
     def setup_styles(self):
         """Konfiguriert moderne Styles für die GUI"""
         style = ttk.Style()
-        
+
+        # Unter Linux startet Tk mit dem alten Theme 'default', das die Farben
+        # uneinheitlich darstellt. 'clam' wirkt moderner und übernimmt die
+        # Farbangaben zuverlässig. Unter Windows bleibt das native Theme aktiv.
+        if style.theme_use() == 'default' and 'clam' in style.theme_names():
+            style.theme_use('clam')
+            style.configure('.', background=self.colors['background'])
+            # clam zeichnet Knöpfe breiter als die übrigen Themes – kompakter halten,
+            # damit die Knopfzeile der Kommunen-Verwaltung ins Fenster passt
+            style.configure('TButton', padding=(6, 3), width=-8)
+            style.map('Custom.TNotebook.Tab',
+                     background=[('selected', self.colors['surface']),
+                                 ('!selected', '#E9ECEF')])
+            self.root.configure(background=self.colors['background'])
+            self.root.option_add('*Toplevel.background', self.colors['background'])
+
         # Notebook Style
         style.configure('Custom.TNotebook', background=self.colors['background'])
         style.configure('Custom.TNotebook.Tab', 
                        padding=[20, 10],
-                       font=('Segoe UI', 10, 'bold'))
+                       font=(self.ui_font, 10, 'bold'))
         
         # Button Styles
         style.configure('Primary.TButton',
-                       font=('Segoe UI', 12, 'bold'),
+                       font=(self.ui_font, 12, 'bold'),
                        foreground='#1A1A1A',
                        background=self.colors['primary'],
                        borderwidth=3,
@@ -63,7 +110,7 @@ class FoerdermittelGUI:
                  relief=[('pressed', 'sunken')])
         
         style.configure('Success.TButton',
-                       font=('Segoe UI', 12, 'bold'),
+                       font=(self.ui_font, 12, 'bold'),
                        foreground='#1A1A1A',
                        background=self.colors['success'],
                        borderwidth=3,
@@ -79,7 +126,7 @@ class FoerdermittelGUI:
         
         # Standard Button Style verbessern
         style.configure('TButton',
-                       font=('Segoe UI', 9),
+                       font=(self.ui_font, 9),
                        foreground=self.colors['text'],
                        background='#E9ECEF',
                        borderwidth=1,
@@ -102,12 +149,12 @@ class FoerdermittelGUI:
                        background=self.colors['surface'],
                        foreground=self.colors['text'],
                        fieldbackground=self.colors['surface'],
-                       font=('Segoe UI', 9))
+                       font=(self.ui_font, 9))
         
         style.configure('Custom.Treeview.Heading',
                        background=self.colors['primary'],
-                       foreground='white',
-                       font=('Segoe UI', 10, 'bold'))
+                       foreground=self.colors['text'],
+                       font=(self.ui_font, 10, 'bold'))
         
     def create_widgets(self):
         """Erstellt alle GUI-Widgets"""
@@ -138,8 +185,8 @@ class FoerdermittelGUI:
         # Titel
         title_label = ttk.Label(header_frame, 
                                text="Fördermittel-Verteilungsrechner",
-                               font=('Segoe UI', 18, 'bold'),
-                               foreground=self.colors['primary'])
+                               font=(self.ui_font, 18, 'bold'),
+                               foreground=self.colors['accent'])
         title_label.pack(side='left')
         
         # Rechte Seite mit Author-Button und Status
@@ -159,8 +206,8 @@ class FoerdermittelGUI:
         
         self.status_label = ttk.Label(self.status_frame,
                                      text="Bereit",
-                                     font=('Segoe UI', 10),
-                                     foreground=self.colors['success'])
+                                     font=(self.ui_font, 10),
+                                     foreground=self.colors['ok'])
         self.status_label.pack()
         
     def create_input_tab(self):
@@ -169,32 +216,32 @@ class FoerdermittelGUI:
         self.notebook.add(self.input_frame, text="📊 Eingabe")
         
         # Scrollable Frame
-        canvas = tk.Canvas(self.input_frame, bg=self.colors['background'])
+        canvas = tk.Canvas(self.input_frame, bg=self.colors['background'], highlightthickness=0)
         scrollbar = ttk.Scrollbar(self.input_frame, orient="vertical", command=canvas.yview)
         scrollable_frame = ttk.Frame(canvas)
-        
+
         scrollable_frame.bind(
             "<Configure>",
             lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
         )
-        
-        canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+
+        window_id = canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
         canvas.configure(yscrollcommand=scrollbar.set)
-        
+        # Inhalt immer so breit wie der sichtbare Bereich
+        canvas.bind("<Configure>", lambda e: canvas.itemconfigure(window_id, width=e.width))
+
         # Parameter-Sektion
         self.create_parameter_section(scrollable_frame)
-        
+
         # Kommunen-Sektion
         self.create_kommunen_section(scrollable_frame)
-        
+
         # Layout
         canvas.pack(side="left", fill="both", expand=True)
         scrollbar.pack(side="right", fill="y")
-        
-        # Mouse wheel binding
-        def _on_mousewheel(event):
-            canvas.yview_scroll(int(-1*(event.delta/120)), "units")
-        canvas.bind("<MouseWheel>", _on_mousewheel)
+
+        # Mausrad-Scrollen
+        self._register_scroll_canvas(canvas)
         
     def create_parameter_section(self, parent):
         """Erstellt die Parameter-Eingabe-Sektion"""
@@ -210,12 +257,12 @@ class FoerdermittelGUI:
         
         ttk.Label(gesamtsumme_frame, 
                  text="Gesamtsumme (€):",
-                 font=('Segoe UI', 10, 'bold')).pack(side='left')
+                 font=(self.ui_font, 10, 'bold')).pack(side='left')
         
         self.gesamtsumme_var = tk.StringVar(value="500000")
         gesamtsumme_entry = ttk.Entry(gesamtsumme_frame, 
                                      textvariable=self.gesamtsumme_var,
-                                     font=('Segoe UI', 12),
+                                     font=(self.ui_font, 12),
                                      width=15)
         gesamtsumme_entry.pack(side='right')
         
@@ -225,12 +272,12 @@ class FoerdermittelGUI:
         
         ttk.Label(mindest_frame, 
                  text="Mindestbetrag (€):",
-                 font=('Segoe UI', 10)).pack(side='left')
+                 font=(self.ui_font, 10)).pack(side='left')
         
         self.mindestbetrag_var = tk.StringVar(value="12500")
         mindest_entry = ttk.Entry(mindest_frame, 
                                  textvariable=self.mindestbetrag_var,
-                                 font=('Segoe UI', 12),
+                                 font=(self.ui_font, 12),
                                  width=15)
         mindest_entry.pack(side='right')
         
@@ -240,12 +287,12 @@ class FoerdermittelGUI:
         
         ttk.Label(sockel_frame, 
                  text="Sockelbetrag (%):",
-                 font=('Segoe UI', 10)).pack(side='left')
+                 font=(self.ui_font, 10)).pack(side='left')
         
         self.sockelbetrag_var = tk.StringVar(value="50")
         sockel_entry = ttk.Entry(sockel_frame, 
                                 textvariable=self.sockelbetrag_var,
-                                font=('Segoe UI', 12),
+                                font=(self.ui_font, 12),
                                 width=15)
         sockel_entry.pack(side='right')
         
@@ -355,7 +402,7 @@ class FoerdermittelGUI:
         self.info_text = tk.Text(info_frame, 
                                 height=4, 
                                 wrap='word',
-                                font=('Segoe UI', 10),
+                                font=(self.ui_font, 10),
                                 bg=self.colors['background'],
                                 relief='solid',
                                 borderwidth=1)
@@ -391,7 +438,7 @@ class FoerdermittelGUI:
         
         self.log_text = tk.Text(log_frame, 
                                wrap='word',
-                               font=('Consolas', 9),
+                               font=(self.mono_font, 9),
                                bg=self.colors['surface'])
         
         log_scrollbar = ttk.Scrollbar(log_frame, orient='vertical', command=self.log_text.yview)
@@ -452,7 +499,7 @@ class FoerdermittelGUI:
             'Kinder_U3': ('Kinder U3', 80, 'e'),
             'Sockelbetrag': ('Sockelbetrag', 100, 'e'),
             'U3_Anteil': ('U3-Anteil', 100, 'e'),
-            'Zwischensumme': ('Zwischensumme', 120, 'e'),
+            'Zwischensumme': ('Zwischensumme', 130, 'e'),
             'Endbetrag': ('Endbetrag', 100, 'e'),
             'Status': ('Status', 200, 'w')
         }
@@ -506,8 +553,8 @@ class FoerdermittelGUI:
         # Copyright Titel - Prominent angezeigt
         copyright_title = ttk.Label(main_frame,
                                    text="© 2025 Fördermittel-Rechner",
-                                   font=('Segoe UI', 18, 'bold'),
-                                   foreground=self.colors['primary'])
+                                   font=(self.ui_font, 18, 'bold'),
+                                   foreground=self.colors['accent'])
         copyright_title.pack(pady=(0, 15))
         
         # Copyright Notice - Gut lesbar
@@ -516,7 +563,7 @@ class FoerdermittelGUI:
         
         copyright_text = ttk.Label(copyright_frame,
                                   text="Copyright © 2025 Marco Benta\nAlle Rechte vorbehalten.\n\nDiese Software ist unter der MIT-Lizenz\nlizenziert und darf frei verwendet werden.",
-                                  font=('Segoe UI', 11),
+                                  font=(self.ui_font, 11),
                                   justify='center',
                                   foreground=self.colors['text'])
         copyright_text.pack(pady=5)
@@ -528,15 +575,15 @@ class FoerdermittelGUI:
         # Name
         name_frame = ttk.Frame(dev_frame)
         name_frame.pack(fill='x', pady=3)
-        ttk.Label(name_frame, text="Entwickler:", font=('Segoe UI', 10, 'bold')).pack(side='left')
-        ttk.Label(name_frame, text="Marco Benta", font=('Segoe UI', 10)).pack(side='left', padx=(10, 0))
+        ttk.Label(name_frame, text="Entwickler:", font=(self.ui_font, 10, 'bold')).pack(side='left')
+        ttk.Label(name_frame, text="Marco Benta", font=(self.ui_font, 10)).pack(side='left', padx=(10, 0))
         
         # Email
         email_frame = ttk.Frame(dev_frame)
         email_frame.pack(fill='x', pady=3)
-        ttk.Label(email_frame, text="Kontakt:", font=('Segoe UI', 10, 'bold')).pack(side='left')
+        ttk.Label(email_frame, text="Kontakt:", font=(self.ui_font, 10, 'bold')).pack(side='left')
         email_label = ttk.Label(email_frame, text="marco@dabenta.de", 
-                               font=('Segoe UI', 10),
+                               font=(self.ui_font, 10),
                                foreground='blue',
                                cursor='hand2')
         email_label.pack(side='left', padx=(10, 0))
@@ -550,8 +597,8 @@ class FoerdermittelGUI:
         # Version
         version_frame = ttk.Frame(dev_frame)
         version_frame.pack(fill='x', pady=3)
-        ttk.Label(version_frame, text="Version:", font=('Segoe UI', 10, 'bold')).pack(side='left')
-        ttk.Label(version_frame, text="0.8 (2025)", font=('Segoe UI', 10)).pack(side='left', padx=(10, 0))
+        ttk.Label(version_frame, text="Version:", font=(self.ui_font, 10, 'bold')).pack(side='left')
+        ttk.Label(version_frame, text="0.8 (2025)", font=(self.ui_font, 10)).pack(side='left', padx=(10, 0))
         
         # Open-Source-Komponenten
         opensource_frame = ttk.LabelFrame(main_frame, text="Verwendete Open-Source-Programme", padding=15)
@@ -564,7 +611,7 @@ class FoerdermittelGUI:
         opensource_text = tk.Text(text_frame,
                                  height=8,
                                  wrap='word',
-                                 font=('Segoe UI', 9),
+                                 font=(self.ui_font, 9),
                                  bg=self.colors['surface'],
                                  relief='solid',
                                  borderwidth=1)
@@ -620,23 +667,25 @@ Vollständige Lizenzinformationen finden Sie in den Dateien LICENSE.md und THIRD
         main_frame.pack(fill='both', expand=True, padx=20, pady=20)
         
         # Canvas und Scrollbar für scrollbaren Inhalt
-        canvas = tk.Canvas(main_frame, bg=self.colors['background'])
+        canvas = tk.Canvas(main_frame, bg=self.colors['background'], highlightthickness=0)
         scrollbar = ttk.Scrollbar(main_frame, orient='vertical', command=canvas.yview)
         scrollable_frame = ttk.Frame(canvas)
-        
+
         scrollable_frame.bind(
             '<Configure>',
             lambda e: canvas.configure(scrollregion=canvas.bbox('all'))
         )
-        
-        canvas.create_window((0, 0), window=scrollable_frame, anchor='nw')
+
+        window_id = canvas.create_window((0, 0), window=scrollable_frame, anchor='nw')
         canvas.configure(yscrollcommand=scrollbar.set)
+        # Inhalt immer so breit wie der sichtbare Bereich
+        canvas.bind('<Configure>', lambda e: canvas.itemconfigure(window_id, width=e.width))
         
         # Titel
         title_label = ttk.Label(scrollable_frame,
                                text="🔢 Wie funktioniert die Fördermittelverteilung?",
-                               font=('Segoe UI', 16, 'bold'),
-                               foreground=self.colors['primary'])
+                               font=(self.ui_font, 16, 'bold'),
+                               foreground=self.colors['accent'])
         title_label.pack(pady=(0, 20))
         
         # Übersicht
@@ -645,7 +694,7 @@ Vollständige Lizenzinformationen finden Sie in den Dateien LICENSE.md und THIRD
         
         overview_text = ttk.Label(overview_frame,
                                   text="Die Fördermittelverteilung erfolgt nach einem iterativen Verfahren, das historische Werte und aktuelle Bedarfe berücksichtigt.",
-                                  font=('Segoe UI', 11),
+                                  font=(self.ui_font, 11),
                                   wraplength=600,
                                   justify='left')
         overview_text.pack(anchor='w')
@@ -656,7 +705,7 @@ Vollständige Lizenzinformationen finden Sie in den Dateien LICENSE.md und THIRD
         
         step1_text = ttk.Label(step1_frame,
                                text="• Jede Kommune erhält einen Sockelbetrag basierend auf ihrem Förderwert aus 2019\n• Sockelbetrag = Wert 2019 × Sockelbetrag-Prozentsatz (Standard: 50%)\n• Der Sockelbetrag bildet die Grundlage der Förderung",
-                               font=('Segoe UI', 10),
+                               font=(self.ui_font, 10),
                                wraplength=600,
                                justify='left')
         step1_text.pack(anchor='w')
@@ -667,7 +716,7 @@ Vollständige Lizenzinformationen finden Sie in den Dateien LICENSE.md und THIRD
         
         step2_text = ttk.Label(step2_frame,
                               text="• Restbudget = Gesamtsumme - Summe aller Sockelbeträge\n• Das Restbudget wird proportional zur Anzahl der U3-Kinder im SGB-II-Bezug verteilt\n• Multiplikator = Restbudget ÷ Gesamtzahl U3-Kinder\n• U3-Anteil je Kommune = Anzahl U3-Kinder × Multiplikator",
-                              font=('Segoe UI', 10),
+                              font=(self.ui_font, 10),
                               wraplength=600,
                               justify='left')
         step2_text.pack(anchor='w')
@@ -678,7 +727,7 @@ Vollständige Lizenzinformationen finden Sie in den Dateien LICENSE.md und THIRD
         
         step3_text = ttk.Label(step3_frame,
                               text="• Zwischensumme = Sockelbetrag + U3-Anteil\n• Falls Zwischensumme < Mindestbetrag: Kommune wird auf Mindestbetrag fixiert\n• Das Budget wird neu auf die verbleibenden Kommunen verteilt\n• Dieser Prozess wiederholt sich, bis alle Kommunen mindestens den Mindestbetrag erhalten",
-                              font=('Segoe UI', 10),
+                              font=(self.ui_font, 10),
                               wraplength=600,
                               justify='left')
         step3_text.pack(anchor='w')
@@ -689,7 +738,7 @@ Vollständige Lizenzinformationen finden Sie in den Dateien LICENSE.md und THIRD
         
         step4_text = ttk.Label(step4_frame,
                               text="• Alle Beträge werden auf ganze Euro gerundet\n• Rundungsdifferenzen werden bei der Kommune mit der höchsten Fördersumme ausgeglichen\n• So wird sichergestellt, dass die Gesamtsumme exakt eingehalten wird",
-                              font=('Segoe UI', 10),
+                              font=(self.ui_font, 10),
                               wraplength=600,
                               justify='left')
         step4_text.pack(anchor='w')
@@ -700,7 +749,7 @@ Vollständige Lizenzinformationen finden Sie in den Dateien LICENSE.md und THIRD
         
         example_text = ttk.Label(example_frame,
                                 text="Gesamtsumme: 500.000 €, Mindestbetrag: 12.500 €, Sockelbetrag: 50%\n\nKommune A: Wert 2019: 20.000 €, U3-Kinder: 10\n→ Sockelbetrag: 10.000 €\n\nKommune B: Wert 2019: 5.000 €, U3-Kinder: 5\n→ Sockelbetrag: 2.500 € (< Mindestbetrag)\n\nRunde 1: Kommune B wird auf 12.500 € fixiert\nRunde 2: Restbudget wird neu auf Kommune A verteilt",
-                                font=('Consolas', 9),
+                                font=(self.mono_font, 9),
                                 wraplength=600,
                                 justify='left',
                                 background=self.colors['surface'])
@@ -712,7 +761,7 @@ Vollständige Lizenzinformationen finden Sie in den Dateien LICENSE.md und THIRD
         
         properties_text = ttk.Label(properties_frame,
                                    text="• Berücksichtigung historischer Förderung\n• Verteilung nach aktuellen U3-Zahlen\n• Mindestbetrag für alle Kommunen\n• Exakte Einhaltung der Gesamtsumme\n• Nachvollziehbare Berechnung",
-                                   font=('Segoe UI', 10),
+                                   font=(self.ui_font, 10),
                                    wraplength=600,
                                    justify='left')
         properties_text.pack(anchor='w')
@@ -729,13 +778,45 @@ Vollständige Lizenzinformationen finden Sie in den Dateien LICENSE.md und THIRD
         canvas.pack(side='left', fill='both', expand=True)
         scrollbar.pack(side='right', fill='y')
         
-        # Mausrad-Scrolling aktivieren
-        def _on_mousewheel(event):
-            canvas.yview_scroll(int(-1*(event.delta/120)), "units")
-        canvas.bind_all("<MouseWheel>", _on_mousewheel)
-        
+        # Mausrad-Scrolling aktivieren (wird beim Schließen automatisch entfernt)
+        self._register_scroll_canvas(canvas)
+
         # Fokus auf das Fenster setzen
         method_window.focus_set()
+
+    def _register_scroll_canvas(self, canvas):
+        """Meldet ein Canvas für das Mausrad-Scrollen an."""
+        self._scroll_canvases.add(canvas)
+        canvas.bind('<Destroy>', lambda e: self._scroll_canvases.discard(canvas), add='+')
+
+    def _on_mousewheel(self, event):
+        """Scrollt das angemeldete Canvas, über dem sich der Mauszeiger befindet.
+
+        Windows und macOS melden das Mausrad als <MouseWheel>, Linux (X11) als
+        <Button-4> (hoch) und <Button-5> (runter).
+        """
+        widget = event.widget
+        if not hasattr(widget, 'winfo_class'):
+            return  # z.B. Elemente der Tk-Dateidialoge
+        if widget.winfo_class() in ('Treeview', 'Text', 'Listbox'):
+            return  # scrollen selbst – nicht zusätzlich die ganze Seite bewegen
+
+        # Vom Widget unter dem Mauszeiger zum umgebenden Canvas hochgehen
+        canvas = widget
+        while canvas is not None and canvas not in self._scroll_canvases:
+            canvas = canvas.master
+        if canvas is None:
+            return
+
+        if event.num == 4:
+            steps = -1
+        elif event.num == 5:
+            steps = 1
+        elif event.delta:
+            steps = -int(event.delta / 120) or (-1 if event.delta > 0 else 1)
+        else:
+            return
+        canvas.yview_scroll(steps, 'units')
         
     def update_status(self, message, color=None):
         """Aktualisiert die Status-Anzeige"""
@@ -805,7 +886,7 @@ Vollständige Lizenzinformationen finden Sie in den Dateien LICENSE.md und THIRD
             self.kinder_u3_var.set('')
             
             self.update_calculation_info()
-            self.update_status(f"Kommune '{name}' hinzugefügt", self.colors['success'])
+            self.update_status(f"Kommune '{name}' hinzugefügt", self.colors['ok'])
             
         except ValueError as e:
             messagebox.showerror("Eingabefehler", "Bitte geben Sie gültige Zahlen ein.")
@@ -913,7 +994,7 @@ Vollständige Lizenzinformationen finden Sie in den Dateien LICENSE.md und THIRD
         self.calc_button.config(state='disabled', text="⏳ Berechnung läuft...")
         self.progress.start()
         self.clear_log()
-        self.update_status("Berechnung läuft...", self.colors['primary'])
+        self.update_status("Berechnung läuft...", self.colors['accent'])
         
         # Starte Berechnung in separatem Thread
         thread = threading.Thread(target=self._run_calculation, 
@@ -962,7 +1043,7 @@ Vollständige Lizenzinformationen finden Sie in den Dateien LICENSE.md und THIRD
         # UI zurücksetzen
         self.calc_button.config(state='normal', text="🚀 Berechnung starten")
         self.progress.stop()
-        self.update_status("Berechnung abgeschlossen", self.colors['success'])
+        self.update_status("Berechnung abgeschlossen", self.colors['ok'])
         
         self.log_message("=" * 50)
         self.log_message("✓ Berechnung erfolgreich abgeschlossen!")
@@ -1002,7 +1083,7 @@ Vollständige Lizenzinformationen finden Sie in den Dateien LICENSE.md und THIRD
         
         # Summary Labels
         summary_info = [
-            ("Gesamtsumme verteilt:", f"{gesamt_verteilt:,.0f} €", self.colors['primary']),
+            ("Gesamtsumme verteilt:", f"{gesamt_verteilt:,.0f} €", self.colors['accent']),
             ("Anzahl Kommunen:", str(anzahl_kommunen), self.colors['text']),
             ("Durchschnitt pro Kommune:", f"{durchschnitt:,.0f} €", self.colors['text']),
             ("Mindestbetrag:", f"{self.rechner.mindestbetrag:,.0f} €", self.colors['text_secondary'])
@@ -1012,8 +1093,8 @@ Vollständige Lizenzinformationen finden Sie in den Dateien LICENSE.md und THIRD
             frame = ttk.Frame(self.summary_frame)
             frame.grid(row=0, column=i, padx=20, sticky='w')
             
-            ttk.Label(frame, text=label, font=('Segoe UI', 9)).pack()
-            ttk.Label(frame, text=value, font=('Segoe UI', 12, 'bold'), 
+            ttk.Label(frame, text=label, font=(self.ui_font, 9)).pack()
+            ttk.Label(frame, text=value, font=(self.ui_font, 12, 'bold'), 
                      foreground=color).pack()
                      
         # Ergebnisse in Tabelle einfügen
@@ -1034,7 +1115,8 @@ Vollständige Lizenzinformationen finden Sie in den Dateien LICENSE.md und THIRD
         """Importiert Kommunendaten aus Excel"""
         filename = filedialog.askopenfilename(
             title="Excel-Datei auswählen",
-            filetypes=[("Excel files", "*.xlsx *.xls"), ("All files", "*.*")]
+            # Großschreibung ergänzt: unter Linux unterscheidet der Dialog Groß/Klein
+            filetypes=[("Excel files", "*.xlsx *.xls *.XLSX *.XLS"), ("All files", "*")]
         )
         
         if not filename:
@@ -1182,7 +1264,7 @@ Vollständige Lizenzinformationen finden Sie in den Dateien LICENSE.md und THIRD
                     continue
                     
             self.update_calculation_info()
-            self.update_status(f"{imported_count} Kommunen importiert", self.colors['success'])
+            self.update_status(f"{imported_count} Kommunen importiert", self.colors['ok'])
             messagebox.showinfo("Import erfolgreich", f"{imported_count} Kommunen wurden erfolgreich importiert.")
             
         except Exception as e:
@@ -1206,7 +1288,7 @@ Vollständige Lizenzinformationen finden Sie in den Dateien LICENSE.md und THIRD
             
             messagebox.showinfo("Vorlage erstellt", 
                               f"Die Import-Vorlage wurde erfolgreich erstellt:\n{filename}")
-            self.update_status("Vorlage erstellt", self.colors['success'])
+            self.update_status("Vorlage erstellt", self.colors['ok'])
             
         except Exception as e:
             messagebox.showerror("Fehler", f"Fehler beim Erstellen der Vorlage:\n{str(e)}")
@@ -1231,7 +1313,7 @@ Vollständige Lizenzinformationen finden Sie in den Dateien LICENSE.md und THIRD
             self.rechner.exportiere_excel(filename)
             messagebox.showinfo("Export erfolgreich", 
                               f"Die Ergebnisse wurden erfolgreich exportiert:\n{filename}")
-            self.update_status("Export abgeschlossen", self.colors['success'])
+            self.update_status("Export abgeschlossen", self.colors['ok'])
             
         except Exception as e:
             messagebox.showerror("Export-Fehler", f"Fehler beim Export:\n{str(e)}")
@@ -1270,25 +1352,61 @@ Vollständige Lizenzinformationen finden Sie in den Dateien LICENSE.md und THIRD
             self.root.clipboard_append("\n".join(text_lines))
             
             messagebox.showinfo("Kopiert", "Die Ergebnisse wurden in die Zwischenablage kopiert.")
-            self.update_status("In Zwischenablage kopiert", self.colors['success'])
+            self.update_status("In Zwischenablage kopiert", self.colors['ok'])
             
         except Exception as e:
             messagebox.showerror("Fehler", f"Fehler beim Kopieren:\n{str(e)}")
 
 
+def hide_hidden_files_in_dialogs(root):
+    """Blendet in Tks eigenem Dateidialog (Linux) versteckte Dateien aus.
+
+    Über den Schalter im Dialog lassen sie sich weiterhin einblenden.
+    """
+    try:
+        # Der Dialog-Code wird erst beim ersten Aufruf geladen: mit einer
+        # ungültigen Option laden, ohne dass ein Dialog erscheint.
+        root.tk.call('tk_getOpenFile', '-foobarbaz')
+    except tk.TclError:
+        pass
+    try:
+        root.tk.call('set', '::tk::dialog::file::showHiddenBtn', '1')
+        root.tk.call('set', '::tk::dialog::file::showHiddenVar', '0')
+    except tk.TclError:
+        pass
+
+
+def create_root():
+    """Erzeugt das Tk-Hauptfenster mit Fensterklasse und Icon."""
+    # Die Fensterklasse (WM_CLASS) verbindet das Fenster unter Linux mit dem
+    # Eintrag im Anwendungsmenü (StartupWMClass), damit Dock und Taskleiste
+    # das richtige Icon zeigen.
+    root = tk.Tk(className='Foerdermittelrechner')
+
+    # Setze Icon (falls vorhanden)
+    icon_png = os.path.join(APP_DIR, 'assets', 'icon.png')
+    try:
+        if os.path.exists(icon_png):
+            root._icon_image = tk.PhotoImage(file=icon_png)  # Referenz behalten
+            root.iconphoto(True, root._icon_image)
+        else:
+            root.iconbitmap('icon.ico')
+    except tk.TclError:
+        pass
+
+    if sys.platform.startswith('linux'):
+        hide_hidden_files_in_dialogs(root)
+
+    return root
+
+
 def main():
     """Hauptfunktion zum Starten der GUI"""
-    root = tk.Tk()
-    
-    # Setze Icon (falls vorhanden)
-    try:
-        root.iconbitmap('icon.ico')
-    except:
-        pass
-        
+    root = create_root()
+
     # Erstelle GUI
     app = FoerdermittelGUI(root)
-    
+
     # Starte Hauptschleife
     root.mainloop()
 
