@@ -49,3 +49,25 @@ ${rumpfNeu}</body>
 fs.mkdirSync('dist', { recursive: true });
 fs.writeFileSync('dist/foerdermittelrechner.html', html);
 console.log(`web/dist/foerdermittelrechner.html: ${(html.length / 1024).toFixed(0)} KB`);
+
+// Passwortgeschützte Version (für GitHub Pages): nur wenn FMR_PASSWORT gesetzt ist.
+// Die Anwendung wird mit AES-256-GCM verschlüsselt; der Schlüssel wird mit PBKDF2-SHA-256
+// aus dem Passwort abgeleitet. Das Passwort selbst landet nicht in der Datei.
+const passwort = process.env.FMR_PASSWORT;
+if (passwort) {
+  const crypto = await import('node:crypto');
+  const iter = 600000;
+  const salt = crypto.randomBytes(16);
+  const iv = crypto.randomBytes(12);
+  const key = crypto.pbkdf2Sync(Buffer.from(passwort.normalize('NFC'), 'utf8'), salt, iter, 32, 'sha256');
+  const cipher = crypto.createCipheriv('aes-256-gcm', key, iv);
+  const verschluesselt = Buffer.concat([cipher.update(html, 'utf8'), cipher.final(), cipher.getAuthTag()]);
+  const gate = fs.readFileSync('gate.html', 'utf8');
+  if (!gate.includes('/*DATEN*/') || !gate.includes('/*PARAMETER*/')) throw new Error('Platzhalter in gate.html fehlen');
+  const parameter = JSON.stringify({ salt: salt.toString('base64'), iv: iv.toString('base64'), iter });
+  const geschuetzt = gate
+    .replace('/*DATEN*/', () => verschluesselt.toString('base64'))
+    .replace('/*PARAMETER*/', () => parameter);
+  fs.writeFileSync('dist/foerdermittelrechner-geschuetzt.html', geschuetzt);
+  console.log(`web/dist/foerdermittelrechner-geschuetzt.html: ${(geschuetzt.length / 1024).toFixed(0)} KB (passwortgeschützt)`);
+}

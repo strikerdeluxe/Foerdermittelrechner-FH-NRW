@@ -9,7 +9,7 @@ Ein Python-basiertes Tool zur Berechnung und Verteilung von Fördermitteln für 
 - **Automatische Berechnung**: Verteilung von Fördermitteln basierend auf verschiedenen Parametern
 - **Standalone-Executable**: Fertige EXE-Datei für Windows ohne Python-Installation
 - **Linux-Unterstützung**: Startskript und Eintrag im Anwendungsmenü (Ubuntu 24.04 und darauf basierende Systeme wie Zorin OS 18)
-- **Web-Version**: Läuft ohne Installation im Browser, mit denselben Ergebnissen wie die Desktop-Version: **https://strikerdeluxe.github.io/Foerdermittelrechner-FH-NRW/**
+- **Web-Version**: Läuft ohne Installation im Browser, mit denselben Ergebnissen wie die Desktop-Version: **https://strikerdeluxe.github.io/Foerdermittelrechner-FH-NRW/** (passwortgeschützt)
 
 ## Dateien
 
@@ -27,7 +27,7 @@ Ein Python-basiertes Tool zur Berechnung und Verteilung von Fördermitteln für 
 ## Installation
 
 ### Web-Version (ohne Installation)
-Im Browser öffnen: https://strikerdeluxe.github.io/Foerdermittelrechner-FH-NRW/
+Im Browser öffnen: https://strikerdeluxe.github.io/Foerdermittelrechner-FH-NRW/ (Passwort beim Herausgeber erfragen)
 
 Die Seite rechnet vollständig im Browser, eingegebene Daten werden nicht übertragen.
 Die Seite ist auch als einzelne HTML-Datei nutzbar, z. B. offline oder im Intranet (Build siehe [web/README.md](web/README.md)).

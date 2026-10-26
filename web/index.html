@@ -393,6 +393,7 @@ dialog.dlg::backdrop{background:var(--scrim)}
     <footer class="foot">
       <p>Fördermittel-Verteilungsrechner · Web-Version 0.8 · © 2025 Marco Benta · MIT-Lizenz</p>
       <p>Die Berechnung läuft vollständig in Ihrem Browser. Ergebnisse sind nicht rechtsverbindlich und sollten fachlich geprüft werden.</p>
+      <button class="btn btn-small" type="button" id="btn-abmelden" hidden>Auf diesem Gerät abmelden</button>
     </footer>
   </main>
 </div>
@@ -1526,6 +1527,14 @@ const Rechner = (() => {
     const k = e.key.toLowerCase();
     if (k === 's') { e.preventDefault(); exportiere(); }
     else if (k === 'o') { e.preventDefault(); $('file-import').click(); }
+  });
+
+  // ---------- Abmelden (nur passwortgeschützte Version mit „angemeldet bleiben“) ----------
+  const ZUGANG = 'foerdermittelrechner.zugang';
+  try { $('btn-abmelden').hidden = !localStorage.getItem(ZUGANG); } catch (e) { /* Speicher nicht verfügbar */ }
+  $('btn-abmelden').addEventListener('click', () => {
+    try { localStorage.removeItem(ZUGANG); } catch (e) { /* Speicher nicht verfügbar */ }
+    location.reload();
   });
 
   // ---------- Start ----------
