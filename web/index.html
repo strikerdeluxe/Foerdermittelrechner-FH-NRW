@@ -1,0 +1,1540 @@
+<title>Fördermittel-Verteilungsrechner</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Verteilung von Fördermitteln auf Kommunen nach Sockelbetrag, U3-Anteil und Mindestbetrag. Die Berechnung läuft vollständig im Browser.">
+<link id="webfonts" rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400&family=IBM+Plex+Sans:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,600&display=swap">
+<style>
+/* Layout: schmale App-Leiste; Arbeitsfläche Parameter | Kommunen; darunter das Ergebnis als Kassenbuch-Tabelle mit Doppellinie unter der Summe */
+:root{
+  --bg:#f1f4f7;
+  --surface:#ffffff;
+  --surface-2:#f6f8fa;
+  --field:#ffffff;
+  --ink:#16202b;
+  --muted:#566373;
+  --line:#d7dee6;
+  --line-strong:#b6c1cd;
+  --accent:#2b5a8d;
+  --accent-ink:#ffffff;
+  --accent-soft:#e2eaf4;
+  --bar-sockel:#2b5a8d;
+  --bar-u3:#8db0d8;
+  --bar-auf:#d9962c;
+  --track:#e8edf2;
+  --warn:#8f5300;
+  --warn-soft:#fbf0dc;
+  --ok:#22704a;
+  --ok-soft:#e1f1e7;
+  --info:#55459f;
+  --info-soft:#ebe8f7;
+  --danger:#b3261e;
+  --danger-soft:#fbe7e5;
+  --shadow:rgba(16,28,42,.22);
+  --scrim:rgba(16,24,34,.45);
+  --font-display:"Source Serif 4","Source Serif Pro",Georgia,"Times New Roman",serif;
+  --font-ui:"IBM Plex Sans","Segoe UI",system-ui,-apple-system,Roboto,"Helvetica Neue",Arial,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Consolas,"Liberation Mono",monospace;
+  --radius:8px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0e141b; --surface:#151e28; --surface-2:#1a2531; --field:#111922; --ink:#e3e9ef; --muted:#98a6b6;
+    --line:#283442; --line-strong:#3a4757; --accent:#88b0e0; --accent-ink:#0e141b; --accent-soft:#1c2d42;
+    --bar-sockel:#88b0e0; --bar-u3:#3d6592; --bar-auf:#d39a3f; --track:#202b37;
+    --warn:#f0b65c; --warn-soft:#33270f; --ok:#74c896; --ok-soft:#15301f; --info:#b3a7f2; --info-soft:#262143;
+    --danger:#f2a49c; --danger-soft:#3a1714; --shadow:rgba(0,0,0,.5); --scrim:rgba(0,0,0,.6);
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0e141b; --surface:#151e28; --surface-2:#1a2531; --field:#111922; --ink:#e3e9ef; --muted:#98a6b6;
+  --line:#283442; --line-strong:#3a4757; --accent:#88b0e0; --accent-ink:#0e141b; --accent-soft:#1c2d42;
+  --bar-sockel:#88b0e0; --bar-u3:#3d6592; --bar-auf:#d39a3f; --track:#202b37;
+  --warn:#f0b65c; --warn-soft:#33270f; --ok:#74c896; --ok-soft:#15301f; --info:#b3a7f2; --info-soft:#262143;
+  --danger:#f2a49c; --danger-soft:#3a1714; --shadow:rgba(0,0,0,.5); --scrim:rgba(0,0,0,.6);
+  color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 15px/1.5 var(--font-ui);-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+[hidden]{display:none!important}
+button,input,textarea{font:inherit;color:inherit}
+a{color:var(--accent)}
+.sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.wrap{max-width:1240px;margin-inline:auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.ic{width:16px;height:16px;flex:none}
+
+/* App-Leiste */
+.appbar{background:var(--surface);border-bottom:1px solid var(--line)}
+.appbar-inner{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 24px;padding-block:14px}
+.brand{min-width:0}
+.brand h1{font:600 clamp(21px,2.3vw,26px)/1.15 var(--font-display);margin:0;letter-spacing:-.005em;text-wrap:balance}
+.brand p{margin:3px 0 0;color:var(--muted);font-size:13.5px}
+.appbar-actions{display:flex;flex-wrap:wrap;gap:4px;margin-inline:-8px}
+
+/* Grundraster */
+.main{display:grid;gap:20px;padding-block:20px 36px}
+.workspace{display:grid;grid-template-columns:minmax(260px,330px) minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:880px){.workspace{grid-template-columns:minmax(0,1fr)}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);min-width:0}
+.panel-head{display:flex;flex-wrap:wrap;align-items:center;gap:10px 12px;padding:16px 20px 0}
+.panel-body{padding:16px 20px 20px}
+.step{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:50%;border:1.5px solid var(--accent);color:var(--accent);font:600 12.5px/1 var(--font-ui);flex:none}
+h2,.h2{font:600 19px/1.2 var(--font-display);margin:0;text-wrap:balance}
+.count{font-size:13.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.head-actions{margin-left:auto;display:flex;flex-wrap:wrap;gap:8px}
+@media (max-width:560px){.head-actions{margin-left:0;width:100%}}
+.eyebrow{font-size:11.5px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin:0}
+
+/* Schaltflächen */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:36px;padding:7px 13px;border:1px solid var(--line-strong);border-radius:6px;background:var(--surface);color:var(--ink);font-weight:500;font-size:14px;line-height:1.2;cursor:pointer;white-space:nowrap;transition:background-color .12s,border-color .12s}
+.btn:hover{background:var(--surface-2);border-color:var(--muted)}
+.btn:focus-visible,.icon-btn:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.btn-primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn-primary:hover{background:var(--accent);border-color:var(--accent);filter:brightness(1.1)}
+.btn-ghost{border-color:transparent;background:transparent}
+.btn-ghost:hover{border-color:transparent}
+.btn-small{min-height:32px;padding:5px 11px;font-size:13.5px}
+.btn-danger{color:var(--danger)}
+.icon-btn{display:inline-grid;place-items:center;width:32px;height:32px;border:0;border-radius:6px;background:transparent;color:var(--muted);cursor:pointer}
+.icon-btn:hover{background:var(--surface-2);color:var(--ink)}
+.icon-btn.del:hover{color:var(--danger);background:var(--danger-soft)}
+
+/* Eingabefelder */
+.field{display:grid;gap:5px;min-width:0}
+.field label{font-size:13px;font-weight:500;color:var(--muted)}
+.input{width:100%;min-width:0;padding:8px 11px;border:1px solid var(--line-strong);border-radius:6px;background:var(--field);color:var(--ink);font-size:16px;font-variant-numeric:tabular-nums}
+.input:focus{outline:2px solid var(--accent);outline-offset:-1px;border-color:var(--accent)}
+.input[aria-invalid="true"]{border-color:var(--danger)}
+.num{text-align:right}
+.unit{display:flex;align-items:stretch}
+.unit .input{border-top-right-radius:0;border-bottom-right-radius:0}
+.unit span{display:grid;place-items:center;min-width:38px;padding:0 10px;border:1px solid var(--line-strong);border-left:0;border-radius:0 6px 6px 0;background:var(--surface-2);color:var(--muted);font-size:14px}
+.hint{margin:0;font-size:12.5px;color:var(--muted)}
+.field-error{margin:0;font-size:13px;color:var(--danger)}
+
+/* Parameter */
+.params{display:grid;gap:14px}
+.grundlage{padding:14px 20px 18px;border-top:1px solid var(--line);display:grid;gap:8px}
+.grundlage dl{margin:0;display:grid;gap:7px}
+.grundlage dl>div{display:flex;justify-content:space-between;align-items:baseline;gap:12px;font-size:14px}
+.grundlage dt{color:var(--muted)}
+.grundlage dd{margin:0;font-weight:500;font-variant-numeric:tabular-nums;text-align:right}
+
+/* Kommunen */
+.note{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 16px;margin:0 0 14px;padding:10px 14px;border-radius:6px;background:var(--info-soft);font-size:14px}
+.note p{margin:0}
+.note.warnnote{background:var(--warn-soft)}
+.addform{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1.15fr) minmax(0,1.15fr) auto;gap:10px;align-items:end}
+.addform-actions{display:flex;gap:8px}
+.addform-error{grid-column:1/-1}
+@media (max-width:680px){
+  .addform{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  .addform .f-name,.addform-actions{grid-column:1/-1}
+  .addform-actions .btn{flex:1}
+}
+.panel-foot{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px 16px;margin-top:12px}
+.foot-actions{display:flex;flex-wrap:wrap;gap:8px}
+.panel.dragover{outline:2px dashed var(--accent);outline-offset:-7px}
+
+/* Tabellen */
+.table-wrap{margin-top:14px;border:1px solid var(--line);border-radius:6px;overflow:auto;background:var(--surface)}
+.table-wrap.k{max-height:440px}
+.table-wrap.r{max-height:min(72vh,760px)}
+.tbl{width:100%;border-collapse:separate;border-spacing:0;font-size:14px;font-variant-numeric:tabular-nums}
+.tbl th{position:sticky;top:0;z-index:1;background:var(--surface-2);text-align:left;font-size:11.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:9px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+.tbl td{padding:7px 12px;border-bottom:1px solid var(--line);vertical-align:middle}
+.tbl tbody tr:last-child td{border-bottom:0}
+.tbl .r{text-align:right;white-space:nowrap}
+.tbl .name{min-width:130px}
+.tbl tbody tr:hover td{background:var(--surface-2)}
+.tbl tr.editing td{background:var(--accent-soft)}
+.row-actions{display:flex;justify-content:flex-end;gap:2px}
+.tbl td.act{padding:3px 6px;width:1%}
+.empty{padding:28px 20px;text-align:center;color:var(--muted);font-size:14px}
+@media (max-width:560px){
+  .panel-head{padding:14px 14px 0}
+  .panel-body{padding:14px 14px 16px}
+  .grundlage{padding:14px 14px 16px}
+  .tbl th,.tbl td{padding-left:8px;padding-right:8px}
+  .tbl .name{min-width:0}
+  .tbl td.act{padding:2px 2px}
+  .row-actions{gap:0}
+  .icon-btn{width:28px;height:30px}
+}
+.tbl tfoot td{position:sticky;bottom:0;background:var(--surface-2);border-top:3px double var(--line-strong);border-bottom:0;font-weight:600}
+.tbl .strong{font-weight:600}
+
+/* Ergebnis */
+.pill{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;font-size:13px;font-weight:500;white-space:nowrap}
+.pill-ok{background:var(--ok-soft);color:var(--ok)}
+.pill-warn{background:var(--warn-soft);color:var(--warn)}
+.summary{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:1px;margin:0;background:var(--line);border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.summary>div{background:var(--surface);padding:12px 14px;min-width:0}
+.summary dt{font-size:11.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.summary dd{margin:3px 0 0;font-size:19px;font-weight:600;line-height:1.25;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.summary small{display:block;margin-top:2px;font-size:12.5px;font-weight:400;color:var(--muted)}
+@media (max-width:1060px){.summary{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:520px){.summary{grid-template-columns:repeat(2,minmax(0,1fr))}.summary dd{font-size:17px}}
+.formel{margin:14px 0 0;font-size:14px;color:var(--muted);font-variant-numeric:tabular-nums}
+.formel b{color:var(--ink);font-weight:600}
+.warnings{display:grid;gap:8px;margin-top:14px}
+.warn{display:flex;gap:10px;align-items:flex-start;padding:10px 14px;border-radius:6px;background:var(--warn-soft);font-size:14px}
+.warn .ic{color:var(--warn);margin-top:2px}
+.warn p{margin:0}
+.legend{display:flex;flex-wrap:wrap;gap:6px 18px;margin:18px 0 0;font-size:12.5px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.sw{width:11px;height:11px;border-radius:2px;flex:none}
+.sw.tick{width:2px;height:13px;border-radius:0;background:var(--ink);opacity:.6}
+.s-sockel{background:var(--bar-sockel)}
+.s-u3{background:var(--bar-u3)}
+.s-auf{background:var(--bar-auf)}
+.dist{position:relative;width:150px;height:10px}
+.dist .seg{display:flex;width:100%;height:100%;border-radius:2px;overflow:hidden;background:var(--track)}
+.dist .seg span{height:100%}
+.dist i{position:absolute;top:-3px;bottom:-3px;width:2px;margin-left:-1px;background:var(--ink);opacity:.6}
+.chip{display:inline-flex;align-items:center;padding:2px 9px;border-radius:999px;font-size:12.5px;font-weight:500;white-space:nowrap}
+.chips{display:flex;flex-wrap:wrap;gap:4px}
+.chip-ok{background:var(--ok-soft);color:var(--ok)}
+.chip-min{background:var(--warn-soft);color:var(--warn)}
+.chip-r1{background:var(--info-soft);color:var(--info)}
+.chip-adj{background:var(--surface-2);color:var(--muted);box-shadow:inset 0 0 0 1px var(--line)}
+
+/* Protokoll */
+.protokoll>summary{display:flex;align-items:center;gap:12px;padding:16px 20px;cursor:pointer;list-style:none;border-radius:var(--radius)}
+.protokoll>summary::-webkit-details-marker{display:none}
+.protokoll>summary .chev{margin-left:auto;transition:transform .15s}
+.protokoll[open]>summary .chev{transform:rotate(180deg)}
+.protokoll[open]>summary{border-bottom:1px solid var(--line);border-radius:var(--radius) var(--radius) 0 0}
+.protokoll .table-wrap{margin-top:0}
+.fixliste{margin:12px 0 0;padding:0;list-style:none;display:grid;gap:6px;font-size:13.5px}
+.fixliste b{font-weight:600}
+.kv{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;margin-top:18px}
+@media (max-width:700px){.kv{grid-template-columns:minmax(0,1fr)}}
+.kv dl{margin:6px 0 0;display:grid;gap:6px}
+.kv dl>div{display:flex;justify-content:space-between;gap:12px;font-size:14px;border-bottom:1px dotted var(--line);padding-bottom:5px}
+.kv dt{color:var(--muted)}
+.kv dd{margin:0;text-align:right;font-variant-numeric:tabular-nums;font-weight:500}
+.mono{font-family:var(--font-mono);font-size:13px}
+
+.foot{display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px 20px;color:var(--muted);font-size:13px}
+.foot p{margin:0;max-width:72ch}
+
+/* Dialoge */
+dialog.dlg{padding:0;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink);width:min(660px,calc(100% - 32px));max-height:calc(100% - 48px);box-shadow:0 24px 64px var(--shadow)}
+dialog.dlg[open]{display:flex;flex-direction:column}
+dialog.dlg::backdrop{background:var(--scrim)}
+.dlg-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 20px;border-bottom:1px solid var(--line)}
+.dlg-head h2{font-size:20px}
+.dlg-body{padding:16px 20px 18px;overflow:auto;min-height:0;flex:1 1 auto}
+.dlg-body p{margin:0 0 10px;max-width:68ch}
+.dlg-body ul{margin:8px 0 0;padding-left:20px}
+.dlg-foot{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:8px;padding:14px 20px;border-top:1px solid var(--line)}
+.steps{margin:14px 0 0;padding:0;list-style:none;counter-reset:s;display:grid;gap:16px}
+.steps>li{counter-increment:s;display:grid;grid-template-columns:28px minmax(0,1fr);gap:4px 12px}
+.steps>li::before{content:counter(s);grid-row:1/3;display:grid;place-items:center;width:24px;height:24px;border-radius:50%;border:1.5px solid var(--accent);color:var(--accent);font-weight:600;font-size:12.5px}
+.steps h3{margin:1px 0 0;font-size:15px;font-weight:600}
+.steps p{margin:0}
+.eq{display:block;margin:6px 0 0;padding:8px 12px;border-radius:6px;background:var(--surface-2);font-family:var(--font-mono);font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre}
+.about-grid{display:grid;grid-template-columns:auto minmax(0,1fr);gap:6px 16px;margin:12px 0 16px;font-size:14px}
+.about-grid dt{color:var(--muted)}
+.about-grid dd{margin:0;display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.copytext{width:100%;min-height:240px;padding:10px 12px;border:1px solid var(--line-strong);border-radius:6px;background:var(--field);color:var(--ink);font-family:var(--font-mono);font-size:12.5px;line-height:1.5;white-space:pre;resize:vertical}
+
+/* Hinweis unten */
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:60;display:flex;align-items:center;gap:14px;max-width:calc(100% - 32px);padding:10px 12px 10px 16px;border-radius:8px;background:var(--ink);color:var(--bg);font-size:14px;box-shadow:0 10px 30px var(--shadow)}
+.toast button{border:0;background:transparent;color:var(--bg);font-weight:600;text-decoration:underline;text-underline-offset:3px;cursor:pointer;padding:4px 6px;white-space:nowrap}
+.toast button:focus-visible{outline:2px solid var(--bg);outline-offset:1px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+<!--BODY-->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <symbol id="i-up" viewBox="0 0 16 16"><path d="M8 10.5V2.5M4.75 5.75 8 2.5l3.25 3.25M2.5 10v2.5a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1V10" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-down" viewBox="0 0 16 16"><path d="M8 2.5v8M4.75 7.25 8 10.5l3.25-3.25M2.5 10v2.5a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1V10" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-grid" viewBox="0 0 16 16"><path d="M3 2.5h10a.5.5 0 0 1 .5.5v10a.5.5 0 0 1-.5.5H3a.5.5 0 0 1-.5-.5V3a.5.5 0 0 1 .5-.5ZM2.5 6.5h11M2.5 10h11M6.5 6.5v7" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></symbol>
+    <symbol id="i-edit" viewBox="0 0 16 16"><path d="M10.6 2.9a1.4 1.4 0 0 1 2 2L5.5 12l-2.8.8.8-2.8Z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></symbol>
+    <symbol id="i-del" viewBox="0 0 16 16"><path d="M4.5 4.5l7 7M11.5 4.5l-7 7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 16 16"><path d="M6 5.5h6.5a.5.5 0 0 1 .5.5v6.5a.5.5 0 0 1-.5.5H6a.5.5 0 0 1-.5-.5V6a.5.5 0 0 1 .5-.5ZM10.5 5.5V3.5a.5.5 0 0 0-.5-.5H3.5a.5.5 0 0 0-.5.5V10a.5.5 0 0 0 .5.5h2" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></symbol>
+    <symbol id="i-warn" viewBox="0 0 16 16"><path d="M8 2.2 14.2 13H1.8Z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M8 6.5v3" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="8" cy="11.3" r=".8" fill="currentColor"/></symbol>
+    <symbol id="i-chev" viewBox="0 0 16 16"><path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-x" viewBox="0 0 16 16"><path d="M4 4l8 8M12 4l-8 8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
+  </defs>
+</svg>
+
+<div class="app" lang="de">
+  <header class="appbar">
+    <div class="wrap appbar-inner">
+      <div class="brand">
+        <h1>Fördermittel-Verteilungsrechner</h1>
+        <p>Verteilung auf Kommunen nach Sockelbetrag, U3-Anteil und Mindestbetrag</p>
+      </div>
+      <nav class="appbar-actions" aria-label="Informationen">
+        <button class="btn btn-ghost" type="button" id="btn-methode">Berechnungsmethode</button>
+        <button class="btn btn-ghost" type="button" id="btn-about">Über die Anwendung</button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap main">
+    <div class="workspace">
+      <section class="panel" aria-labelledby="h-parameter">
+        <div class="panel-head"><span class="step" aria-hidden="true">1</span><h2 id="h-parameter">Parameter</h2></div>
+        <form class="panel-body params" id="form-params" novalidate>
+          <div class="field">
+            <label for="p-gesamt">Gesamtsumme</label>
+            <div class="unit"><input class="input num" id="p-gesamt" inputmode="decimal" autocomplete="off" spellcheck="false" aria-describedby="e-gesamt"><span>€</span></div>
+            <p class="field-error" id="e-gesamt" hidden></p>
+          </div>
+          <div class="field">
+            <label for="p-mindest">Mindestbetrag je Kommune</label>
+            <div class="unit"><input class="input num" id="p-mindest" inputmode="decimal" autocomplete="off" spellcheck="false" aria-describedby="e-mindest"><span>€</span></div>
+            <p class="field-error" id="e-mindest" hidden></p>
+          </div>
+          <div class="field">
+            <label for="p-sockel">Sockelbetrag</label>
+            <div class="unit"><input class="input num" id="p-sockel" inputmode="decimal" autocomplete="off" spellcheck="false" aria-describedby="h-sockel e-sockel"><span>%</span></div>
+            <p class="hint" id="h-sockel">Anteil am Förderwert 2019</p>
+            <p class="field-error" id="e-sockel" hidden></p>
+          </div>
+        </form>
+        <div class="grundlage">
+          <p class="eyebrow" id="h-grundlage">Berechnungsgrundlage</p>
+          <dl aria-labelledby="h-grundlage">
+            <div><dt>Kommunen</dt><dd id="g-anzahl">0</dd></div>
+            <div><dt>Summe Wert 2019</dt><dd id="g-wert">0 €</dd></div>
+            <div><dt>Summe Sockelbeträge</dt><dd id="g-sockel">–</dd></div>
+            <div><dt>Summe Kinder U3</dt><dd id="g-kinder">0</dd></div>
+          </dl>
+        </div>
+      </section>
+
+      <section class="panel" id="panel-kommunen" aria-labelledby="h-kommunen">
+        <div class="panel-head">
+          <span class="step" aria-hidden="true">2</span><h2 id="h-kommunen">Kommunen</h2><span class="count" id="k-count"></span>
+          <div class="head-actions">
+            <button class="btn" type="button" id="btn-import"><svg class="ic" aria-hidden="true"><use href="#i-up"/></svg>Excel importieren</button>
+            <button class="btn" type="button" id="btn-vorlage"><svg class="ic" aria-hidden="true"><use href="#i-grid"/></svg>Import-Vorlage</button>
+            <input type="file" id="file-import" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div class="note" id="note-beispiel" hidden>
+            <p>Die Tabelle enthält <strong>Beispieldaten</strong>. Tragen Sie Ihre Kommunen ein oder importieren Sie eine Excel-Datei.</p>
+            <button class="btn btn-small" type="button" id="btn-beispiel-weg">Beispieldaten entfernen</button>
+          </div>
+          <div class="note warnnote" id="note-doppelt" hidden><p id="note-doppelt-text"></p></div>
+          <form class="addform" id="form-kommune" novalidate>
+            <div class="field f-name"><label for="k-name">Kommune</label><input class="input" id="k-name" autocomplete="off" placeholder="z. B. Gemeinde Musterstadt"></div>
+            <div class="field"><label for="k-wert">Wert 2019 (€)</label><input class="input num" id="k-wert" inputmode="decimal" autocomplete="off" spellcheck="false"></div>
+            <div class="field"><label for="k-kinder">Kinder U3 im SGB-II-Bezug</label><input class="input num" id="k-kinder" inputmode="decimal" autocomplete="off" spellcheck="false"></div>
+            <div class="addform-actions">
+              <button class="btn btn-primary" type="submit" id="k-submit">Hinzufügen</button>
+              <button class="btn" type="button" id="k-cancel" hidden>Abbrechen</button>
+            </div>
+            <p class="field-error addform-error" id="k-error" role="alert" hidden></p>
+          </form>
+          <div class="table-wrap k">
+            <table class="tbl" id="k-table">
+              <thead><tr><th scope="col">Kommune</th><th scope="col" class="r">Wert 2019</th><th scope="col" class="r">Kinder U3</th><th scope="col"><span class="sr">Aktionen</span></th></tr></thead>
+              <tbody id="k-body"></tbody>
+            </table>
+            <div class="empty" id="k-empty" hidden>Noch keine Kommunen eingetragen. Tragen Sie oben die erste Kommune ein oder importieren Sie eine Excel-Datei.</div>
+          </div>
+          <div class="panel-foot">
+            <p class="hint">Excel-Dateien (.xlsx) können Sie auch auf diese Fläche ziehen. Eingaben werden automatisch in diesem Browser gespeichert.</p>
+            <div class="foot-actions">
+              <button class="btn btn-small" type="button" id="btn-beispiel">Beispieldaten laden</button>
+              <button class="btn btn-small btn-danger" type="button" id="btn-clear">Alle löschen</button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <section class="panel" aria-labelledby="h-ergebnis">
+      <div class="panel-head">
+        <span class="step" aria-hidden="true">3</span><h2 id="h-ergebnis">Ergebnis</h2>
+        <span class="pill" id="r-check" hidden></span>
+        <div class="head-actions">
+          <button class="btn btn-primary" type="button" id="btn-export"><svg class="ic" aria-hidden="true"><use href="#i-down"/></svg>Excel exportieren</button>
+          <button class="btn" type="button" id="btn-copy"><svg class="ic" aria-hidden="true"><use href="#i-copy"/></svg>In Zwischenablage</button>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="empty" id="r-empty" hidden></div>
+        <div id="r-content">
+          <dl class="summary" id="r-summary"></dl>
+          <p class="formel" id="r-formel"></p>
+          <div class="warnings" id="r-warnings" hidden></div>
+          <div class="legend" aria-hidden="true">
+            <span><i class="sw s-sockel"></i>Sockelbetrag</span>
+            <span><i class="sw s-u3"></i>U3-Anteil</span>
+            <span><i class="sw s-auf"></i>Aufstockung auf Mindestbetrag</span>
+            <span><i class="sw tick"></i>Mindestbetrag</span>
+          </div>
+          <div class="table-wrap r">
+            <table class="tbl" id="r-table">
+              <thead><tr>
+                <th scope="col">Kommune</th><th scope="col" class="r">Wert 2019</th><th scope="col" class="r">Kinder U3</th><th scope="col" class="r">Sockelbetrag</th><th scope="col" class="r">U3-Anteil</th><th scope="col" class="r">Zwischensumme</th><th scope="col" class="r">Endbetrag</th><th scope="col">Verteilung</th><th scope="col">Status</th>
+              </tr></thead>
+              <tbody id="r-body"></tbody>
+              <tfoot id="r-foot"></tfoot>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <details class="panel protokoll" id="protokoll">
+      <summary><span class="h2">Berechnungsprotokoll</span><span class="count" id="p-kurz"></span><svg class="ic chev" aria-hidden="true"><use href="#i-chev"/></svg></summary>
+      <div class="panel-body" id="p-body"></div>
+    </details>
+
+    <footer class="foot">
+      <p>Fördermittel-Verteilungsrechner · Web-Version 0.8 · © 2025 Marco Benta · MIT-Lizenz</p>
+      <p>Die Berechnung läuft vollständig in Ihrem Browser. Ergebnisse sind nicht rechtsverbindlich und sollten fachlich geprüft werden.</p>
+    </footer>
+  </main>
+</div>
+
+<dialog class="dlg" id="dlg-methode" aria-labelledby="dm-title">
+  <div class="dlg-head"><h2 id="dm-title">So wird verteilt</h2><button class="icon-btn" type="button" data-close aria-label="Schließen"><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></button></div>
+  <div class="dlg-body">
+    <p>Die Fördermittel werden in einem iterativen Verfahren verteilt, das den Förderwert 2019 und die Zahl der Kinder unter drei Jahren im SGB-II-Bezug berücksichtigt.</p>
+    <ol class="steps">
+      <li><h3>Sockelbetrag berechnen</h3><p>Jede Kommune erhält einen Sockelbetrag auf Grundlage ihres Förderwerts 2019.<span class="eq">Sockelbetrag = Wert 2019 × Sockelbetrag-Prozentsatz</span></p></li>
+      <li><h3>Restbudget nach U3-Kindern verteilen</h3><p>Was nach den Sockelbeträgen übrig bleibt, wird im Verhältnis der Kinder U3 im SGB-II-Bezug verteilt.<span class="eq">Restbudget = Gesamtsumme − Summe der Sockelbeträge
+Multiplikator = Restbudget ÷ Kinder U3 gesamt
+U3-Anteil = Kinder U3 × Multiplikator</span></p></li>
+      <li><h3>Mindestbetrag prüfen, Runde für Runde</h3><p>Liegt die Zwischensumme (Sockelbetrag + U3-Anteil) einer Kommune unter dem Mindestbetrag, wird sie auf den Mindestbetrag festgesetzt. Hatte sie in Runde 1 bereits mindestens den Mindestbetrag erreicht, behält sie stattdessen ihren Wert aus Runde 1. Das übrige Budget wird in der nächsten Runde auf die verbleibenden Kommunen neu verteilt, bis keine Kommune mehr unter den Mindestbetrag fällt (höchstens 10 Runden).</p></li>
+      <li><h3>Runden und ausgleichen</h3><p>Alle Endbeträge werden auf ganze Euro gerundet; Beträge mit genau 50 Cent zur nächsten geraden Zahl. Die Rundungsdifferenz wird bei der Kommune mit dem höchsten Betrag ausgeglichen, sodass die Gesamtsumme exakt eingehalten wird.</p></li>
+    </ol>
+    <p style="margin-top:18px"><strong>Beispiel:</strong> Gesamtsumme 500.000 €, Mindestbetrag 12.500 €, Sockelbetrag 50 %.</p>
+    <span class="eq">Kommune A: Wert 2019 20.000 €, 10 Kinder U3 → Sockelbetrag 10.000 €
+Kommune B: Wert 2019  5.000 €,  5 Kinder U3 → Sockelbetrag  2.500 €
+Liegt eine Zwischensumme unter 12.500 €, wird die Kommune festgesetzt
+und das Restbudget in Runde 2 auf die übrigen Kommunen verteilt.</span>
+    <p style="margin-top:14px">Der Rechenkern entspricht der Desktop-Version (foerdermittel_rechner.py) und liefert bei gleichen Eingaben dieselben Beträge.</p>
+  </div>
+  <div class="dlg-foot"><button class="btn btn-primary" type="button" data-close>Verstanden</button></div>
+</dialog>
+
+<dialog class="dlg" id="dlg-about" aria-labelledby="da-title">
+  <div class="dlg-head"><h2 id="da-title">Über die Anwendung</h2><button class="icon-btn" type="button" data-close aria-label="Schließen"><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></button></div>
+  <div class="dlg-body">
+    <p><strong>© 2025 Fördermittel-Rechner</strong><br>Copyright © 2025 Marco Benta. Diese Software ist unter der MIT-Lizenz lizenziert und darf frei verwendet werden.</p>
+    <dl class="about-grid">
+      <dt>Entwickler</dt><dd>Marco Benta</dd>
+      <dt>Kontakt</dt><dd><span class="mono" id="about-mail">marco@dabenta.de</span><button class="btn btn-small" type="button" id="btn-mail-copy">Kopieren</button></dd>
+      <dt>Version</dt><dd>0.8 Web (2026), Rechenkern wie Desktop-Version 0.8</dd>
+    </dl>
+    <p class="eyebrow">Verwendete Open-Source-Komponenten</p>
+    <ul>
+      <li>ExcelJS 4.4.0 (MIT-Lizenz) für Excel-Import und -Export</li>
+      <li>IBM Plex Sans, IBM Plex Mono und Source Serif 4 (SIL Open Font License 1.1)</li>
+    </ul>
+    <p style="margin-top:14px">Diese Software dient nur zu Informationszwecken. Die Berechnungen sind nicht rechtsverbindlich und ersetzen keine fachliche Prüfung. Alle Eingaben werden ausschließlich in diesem Browser verarbeitet und gespeichert.</p>
+  </div>
+  <div class="dlg-foot"><button class="btn btn-primary" type="button" data-close>Schließen</button></div>
+</dialog>
+
+<dialog class="dlg" id="dlg-frage" aria-labelledby="df-title">
+  <div class="dlg-head"><h2 id="df-title"></h2></div>
+  <div class="dlg-body" id="df-body"></div>
+  <div class="dlg-foot" id="df-foot"></div>
+</dialog>
+
+<dialog class="dlg" id="dlg-copy" aria-labelledby="dc-title">
+  <div class="dlg-head"><h2 id="dc-title">Ergebnis kopieren</h2><button class="icon-btn" type="button" data-close aria-label="Schließen"><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></button></div>
+  <div class="dlg-body">
+    <p>Der Text ist markiert. Kopieren Sie ihn mit Strg+C (Mac: ⌘+C).</p>
+    <textarea class="copytext" id="dc-text" readonly spellcheck="false" aria-label="Ergebnis als Text"></textarea>
+  </div>
+  <div class="dlg-foot"><button class="btn btn-primary" type="button" data-close>Fertig</button></div>
+</dialog>
+
+<div class="toast" id="toast" role="status" aria-live="polite" hidden><span id="toast-text"></span><button type="button" id="toast-action" hidden></button></div>
+
+<script>
+/*RECHNER-START*/
+const Rechner = (() => {
+  'use strict';
+
+  // ---------- Zahlenformate (deutsch) ----------
+  const NF0 = new Intl.NumberFormat('de-DE', { maximumFractionDigits: 0 });
+  const NF2 = new Intl.NumberFormat('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const NF6 = new Intl.NumberFormat('de-DE', { maximumFractionDigits: 6 });
+  const NFS = new Intl.NumberFormat('de-DE', { maximumFractionDigits: 0, signDisplay: 'exceptZero' });
+  const eur0 = (x) => NF0.format(x || 0) + ' €';
+  const eur2 = (x) => NF2.format(x || 0) + ' €';
+  const eurSigned = (x) => NFS.format(x || 0) + ' €';
+  const zahl = (x) => NF6.format(x || 0);
+
+  // ---------- Numerik wie NumPy/pandas ----------
+  // pandas summiert über NumPy mit paarweiser Summation (8 Akkumulatoren, Blöcke zu 128).
+  // Gleiche Reihenfolge der Additionen = bitgleiche Ergebnisse wie die Desktop-Version.
+  function pairwise(a, lo, n) {
+    if (n < 8) {
+      let res = 0;
+      for (let i = 0; i < n; i++) res += a[lo + i];
+      return res;
+    }
+    if (n <= 128) {
+      let r0 = a[lo], r1 = a[lo + 1], r2 = a[lo + 2], r3 = a[lo + 3];
+      let r4 = a[lo + 4], r5 = a[lo + 5], r6 = a[lo + 6], r7 = a[lo + 7];
+      let i;
+      for (i = 8; i < n - (n % 8); i += 8) {
+        r0 += a[lo + i]; r1 += a[lo + i + 1]; r2 += a[lo + i + 2]; r3 += a[lo + i + 3];
+        r4 += a[lo + i + 4]; r5 += a[lo + i + 5]; r6 += a[lo + i + 6]; r7 += a[lo + i + 7];
+      }
+      let res = ((r0 + r1) + (r2 + r3)) + ((r4 + r5) + (r6 + r7));
+      for (; i < n; i++) res += a[lo + i];
+      return res;
+    }
+    let n2 = Math.floor(n / 2);
+    n2 -= n2 % 8;
+    return pairwise(a, lo, n2) + pairwise(a, lo + n2, n - n2);
+  }
+  const npSum = (arr) => 0 + pairwise(arr, 0, arr.length);
+
+  // numpy.rint: auf ganze Zahl, bei exakt ,5 zur geraden Zahl
+  function rint(x) {
+    if (!Number.isFinite(x)) return x;
+    if (Math.abs(x - Math.trunc(x)) === 0.5) return 2 * Math.round(x / 2);
+    return Math.round(x);
+  }
+
+  // Python f"{x:.{d}f}" (korrekt gerundet, bei exaktem Gleichstand zur geraden Ziffer)
+  function pyFixed(x, d) {
+    if (!Number.isFinite(x)) return String(x);
+    const neg = x < 0 || Object.is(x, -0);
+    const ax = Math.abs(x);
+    if (ax >= 1e21) return (neg ? '-' : '') + ax.toFixed(d);
+    const s = ax.toFixed(Math.min(100, d + 60));
+    const [ip, fp = ''] = s.split('.');
+    const keep = fp.slice(0, d);
+    const rest = fp.slice(d);
+    let up = false;
+    if (rest && rest[0] > '5') up = true;
+    else if (rest && rest[0] === '5') {
+      if (/[1-9]/.test(rest.slice(1))) up = true;
+      else up = Number((ip + keep).slice(-1)) % 2 === 1;
+    }
+    const digits = (ip + keep).split('').map(Number);
+    if (up) {
+      let i = digits.length - 1;
+      while (i >= 0 && digits[i] === 9) { digits[i] = 0; i--; }
+      if (i >= 0) digits[i] += 1; else digits.unshift(1);
+    }
+    const intLen = digits.length - d;
+    let out = digits.slice(0, intLen).join('').replace(/^0+(?=\d)/, '') || '0';
+    if (d > 0) out += '.' + digits.slice(intLen).join('');
+    return (neg ? '-' : '') + out;
+  }
+  const pyRoundTo = (x, d) => parseFloat(pyFixed(x, d));
+
+  // Python repr() einer Kommazahl für Werte im üblichen Bereich (z. B. 50.0)
+  function pyFloatStr(x) {
+    if (Number.isInteger(x) && Math.abs(x) < 1e16) return x.toFixed(1);
+    return String(x);
+  }
+
+  // ---------- Eingaben ----------
+  // Zahl aus einem Eingabefeld: deutsch (1.234,56) und englisch (1,234.56) werden erkannt
+  function parseEingabe(text) {
+    let s = String(text == null ? '' : text).trim().replace(/[€\s  ]/g, '').replace(/^\+/, '');
+    if (!s) return NaN;
+    let neg = false;
+    if (s[0] === '-' || s[0] === '−') { neg = true; s = s.slice(1); }
+    let n;
+    if (/^\d{1,3}(\.\d{3})+(,\d*)?$/.test(s)) n = Number(s.replace(/\./g, '').replace(',', '.'));
+    else if (/^\d+(,\d*)?$/.test(s)) n = Number(s.replace(',', '.'));
+    else if (/^,\d+$/.test(s)) n = Number('0' + s.replace(',', '.'));
+    else if (/^\d{1,3}(,\d{3})+(\.\d*)?$/.test(s)) n = Number(s.replace(/,/g, ''));
+    else if (/^\d*\.\d+$/.test(s) || /^\d+\.$/.test(s)) n = Number(s);
+    else return NaN;
+    return neg ? -n : n;
+  }
+
+  // Zahlenumwandlung beim Excel-Import, 1:1 wie convert_german_number der Desktop-Version
+  function convertGermanNumber(value) {
+    if (value === null || value === undefined) return null;
+    if (typeof value === 'number') return Number.isNaN(value) ? null : value;
+    if (typeof value === 'boolean') return value ? 1 : 0;
+    let s = String(value).trim();
+    if (!s) return null;
+    s = s.split('€').join('').split(' ').join('');
+    if (s.includes(',') && s.includes('.')) {
+      const commaPos = s.lastIndexOf(',');
+      const dotPos = s.lastIndexOf('.');
+      if (commaPos > dotPos) {
+        s = s.split('.').join('').split(',').join('.');
+      } else {
+        const parts = s.split('.');
+        if (parts.length >= 2) {
+          const integer = parts.slice(0, -1).join('.').split(',').join('');
+          s = integer + '.' + parts[parts.length - 1];
+        } else {
+          s = s.split(',').join('');
+        }
+      }
+    } else if (s.includes(',')) {
+      const commaPos = s.lastIndexOf(',');
+      const after = s.slice(commaPos + 1);
+      if (after.length <= 2 && /^[0-9]+$/.test(after)) {
+        const count = s.split(',').length - 1;
+        if (count === 1) {
+          s = s.replace(',', '.');
+        } else {
+          const parts = s.split(',');
+          s = parts.slice(0, -1).join('') + '.' + parts[parts.length - 1];
+        }
+      } else {
+        s = s.split(',').join('');
+      }
+    }
+    if (!/^[+-]?(\d+\.?\d*|\.\d+)([eE][+-]?\d+)?$/.test(s)) return null;
+    const n = Number(s);
+    return Number.isFinite(n) ? n : null;
+  }
+
+  // ---------- Berechnung (wie FoerdermittelRechner.berechne_verteilung) ----------
+  const MAX_RUNDEN = 10;
+
+  function berechne(kommunen, { gesamtsumme, mindestbetrag, sockelProzent }) {
+    const rows = kommunen.map((k) => ({
+      name: k.name, wert: k.wert, kinder: k.kinder,
+      status: 'In Berechnung', art: 'offen',
+      sockel: k.wert * sockelProzent,
+      u3: 0, zwischensumme: 0, endbetrag: 0, runde: 0, erste: 0,
+      endVorRundung: 0, ausgleich: 0,
+    }));
+    const fixiert = new Set();
+    const runden = [];
+    let runde = 0;
+    let abgeschlossen = false;
+
+    while (runde < MAX_RUNDEN) {
+      runde += 1;
+      const aktiv = [];
+      const fix = [];
+      rows.forEach((_, i) => (fixiert.has(i) ? fix : aktiv).push(i));
+      if (aktiv.length === 0) { abgeschlossen = true; break; }
+
+      const summeSockel = npSum(aktiv.map((i) => rows[i].sockel));
+      const bereitsFixiert = npSum(fix.map((i) => rows[i].endbetrag));
+      const verfuegbar = gesamtsumme - bereitsFixiert;
+      const rest = verfuegbar - summeSockel;
+      const summeU3 = npSum(aktiv.map((i) => rows[i].kinder));
+      const mult = summeU3 > 0 ? rest / summeU3 : 0;
+
+      for (const i of aktiv) {
+        const r = rows[i];
+        r.u3 = r.kinder * mult;
+        r.zwischensumme = r.sockel + r.u3;
+        r.runde = runde;
+        if (runde === 1) r.erste = r.zwischensumme;
+      }
+
+      const neu = [];
+      for (const i of aktiv) {
+        const r = rows[i];
+        if (r.zwischensumme < mindestbetrag) {
+          if (runde > 1 && r.erste >= mindestbetrag) {
+            r.endbetrag = r.erste;
+            r.status = `Wert aus Runde 1 (${eur2(r.erste).replace(' ', ' ')})`;
+            r.art = 'runde1';
+          } else {
+            r.endbetrag = mindestbetrag;
+            r.status = `Fixiert auf Mindestbetrag (Runde ${runde})`;
+            r.art = 'mindest';
+          }
+          neu.push(i);
+        } else {
+          r.endbetrag = r.zwischensumme;
+        }
+      }
+      neu.forEach((i) => fixiert.add(i));
+      runden.push({
+        runde, aktiv: aktiv.length, verfuegbar, summeSockel, rest, summeU3, mult,
+        neu: neu.map((i) => ({ name: rows[i].name, art: rows[i].art, betrag: rows[i].endbetrag })),
+      });
+
+      if (neu.length === 0) {
+        for (const i of aktiv) { rows[i].status = 'OK'; rows[i].art = 'ok'; }
+        abgeschlossen = true;
+        break;
+      }
+    }
+
+    // Rundung auf ganze Euro und Ausgleich bei der Kommune mit dem höchsten Betrag
+    for (const r of rows) { r.endVorRundung = r.endbetrag; r.endbetrag = rint(r.endbetrag); }
+    const summeVor = npSum(rows.map((r) => r.endVorRundung));
+    const summeNach = npSum(rows.map((r) => r.endbetrag));
+    const differenzRundung = gesamtsumme - summeNach;
+    let ausgleich = null;
+    if (rows.length && Math.abs(differenzRundung) >= 1) {
+      let maxI = 0;
+      for (let i = 1; i < rows.length; i++) if (rows[i].endbetrag > rows[maxI].endbetrag) maxI = i;
+      const r = rows[maxI];
+      const alt = r.endbetrag;
+      r.endbetrag += differenzRundung;
+      r.ausgleich = differenzRundung;
+      if (!r.status.includes('Rundungsausgleich')) r.status += ' + Rundungsausgleich';
+      ausgleich = { index: maxI, name: r.name, alt, neu: r.endbetrag, diff: differenzRundung };
+    }
+
+    const ist = npSum(rows.map((r) => r.endbetrag));
+    const differenz = Math.abs(gesamtsumme - ist);
+    const validierungOk = !(differenz > 0.01);
+
+    // Hinweise (ändern keine Beträge)
+    const hinweise = [];
+    if (!abgeschlossen) {
+      hinweise.push(`Die Berechnung ist nach ${MAX_RUNDEN} Runden nicht abgeschlossen. Kommunen mit dem Status „In Berechnung“ bitte prüfen.`);
+    }
+    const negativ = runden.find((x) => x.rest < 0);
+    if (negativ) {
+      hinweise.push(`In Runde ${negativ.runde} übersteigen die Sockelbeträge das verfügbare Budget um ${eur2(-negativ.rest)}. Der U3-Anteil ist dadurch negativ.`);
+    }
+    const unter = rows.filter((r) => r.endbetrag < mindestbetrag);
+    if (unter.length) {
+      const namen = unter.slice(0, 5).map((r) => `${r.name} (${eur0(r.endbetrag)})`).join(', ') + (unter.length > 5 ? ` und ${unter.length - 5} weitere` : '');
+      const bedarf = rows.length * mindestbetrag;
+      hinweise.push(`${unter.length === 1 ? 'Eine Kommune erhält' : unter.length + ' Kommunen erhalten'} weniger als den Mindestbetrag: ${namen}.` +
+        (bedarf > gesamtsumme ? ` Allein die Mindestbeträge (${rows.length} × ${eur0(mindestbetrag)} = ${eur0(bedarf)}) übersteigen die Gesamtsumme.` : ''));
+    }
+    if (!validierungOk) {
+      hinweise.push(`Die verteilte Summe weicht um ${eur2(differenz)} von der Gesamtsumme ab.` +
+        (Number.isInteger(gesamtsumme) ? '' : ' Rundungsdifferenzen werden nur in ganzen Euro ausgeglichen. Geben Sie die Gesamtsumme deshalb in ganzen Euro an.'));
+    }
+
+    return {
+      params: { gesamtsumme, mindestbetrag, sockelProzent },
+      rows, runden, abgeschlossen,
+      rundung: { summeVor, summeNach, differenz: differenzRundung, ausgleich },
+      validierung: { soll: gesamtsumme, ist, differenz, ok: validierungOk },
+      hinweise,
+    };
+  }
+
+  // ---------- Excel-Import ----------
+  const SPALTEN = {
+    name: ['kommune', 'name', 'gemeinde', 'stadt'],
+    wert: ['wert 2019 (€)', 'wert 2019', 'wert_2019'],
+    kinder: ['kinder u3 im sgb-ii-bezug', 'kinder u3', 'kinder_u3', 'u3'],
+  };
+  const SPALTEN_ANZEIGE = { name: 'Kommune', wert: 'Wert 2019 (€)', kinder: 'Kinder U3 im SGB-II-Bezug' };
+
+  function zellwert(v) {
+    if (v === null || v === undefined) return null;
+    if (v instanceof Date) return v;
+    if (typeof v === 'object') {
+      if ('result' in v) return zellwert(v.result);
+      if (Array.isArray(v.richText)) return v.richText.map((t) => t.text).join('');
+      if ('text' in v) return zellwert(v.text);
+      return null;
+    }
+    return v;
+  }
+
+  class ImportFehler extends Error {}
+
+  function leseKommunen(workbook) {
+    const blaetter = workbook.worksheets.filter((ws) => ws && ws.state !== 'veryHidden');
+    const bevorzugt = blaetter.find((ws) => ws.name === 'Kommunendaten');
+    const reihenfolge = bevorzugt ? [bevorzugt, ...blaetter.filter((ws) => ws !== bevorzugt)] : blaetter;
+    let bester = null;
+
+    for (const ws of reihenfolge) {
+      const bisZeile = Math.min(ws.rowCount, 40);
+      for (let z = 1; z <= bisZeile; z++) {
+        const spalten = {};
+        ws.getRow(z).eachCell({ includeEmpty: false }, (cell, c) => {
+          const v = zellwert(cell.value);
+          if (v === null || v instanceof Date) return;
+          const t = String(v).trim().toLowerCase();
+          for (const [key, aliases] of Object.entries(SPALTEN)) {
+            const prio = aliases.indexOf(t);
+            if (prio >= 0 && (!spalten[key] || prio < spalten[key].prio)) spalten[key] = { c, prio };
+          }
+        });
+        const treffer = Object.keys(spalten).length;
+        if (treffer === 3) return lesZeilen(ws, z, spalten);
+        if (treffer && (!bester || treffer > bester.treffer)) bester = { treffer, spalten, blatt: ws.name };
+      }
+    }
+    const gefunden = bester ? Object.keys(bester.spalten) : [];
+    const fehlt = Object.keys(SPALTEN).filter((k) => !gefunden.includes(k)).map((k) => `„${SPALTEN_ANZEIGE[k]}“`);
+    throw new ImportFehler(bester
+      ? `Im Blatt „${bester.blatt}“ fehlen die Spalten ${fehlt.join(' und ')}. Erwartet werden die Spalten „Kommune“, „Wert 2019 (€)“ und „Kinder U3 im SGB-II-Bezug“.`
+      : 'In der Datei wurde keine Kopfzeile mit den Spalten „Kommune“, „Wert 2019 (€)“ und „Kinder U3 im SGB-II-Bezug“ gefunden. Am einfachsten verwenden Sie die Import-Vorlage.');
+  }
+
+  function lesZeilen(ws, kopfzeile, spalten) {
+    const kommunen = [];
+    let uebersprungen = 0;
+    for (let z = kopfzeile + 1; z <= ws.rowCount; z++) {
+      const row = ws.getRow(z);
+      const rohName = zellwert(row.getCell(spalten.name.c).value);
+      if (rohName === null || rohName === undefined) continue;
+      const name = (rohName instanceof Date ? rohName.toISOString().slice(0, 10) : String(rohName)).trim();
+      const rohWert = zellwert(row.getCell(spalten.wert.c).value);
+      const rohKinder = zellwert(row.getCell(spalten.kinder.c).value);
+      if (!name) { if (rohWert !== null || rohKinder !== null) uebersprungen++; continue; }
+      const wert = rohWert instanceof Date ? null : convertGermanNumber(rohWert);
+      const kinder = rohKinder instanceof Date ? null : convertGermanNumber(rohKinder);
+      if (wert === null || kinder === null || wert < 0 || kinder < 0) { uebersprungen++; continue; }
+      // Die Desktop-Version übernimmt Werte auf Cent und Kinder U3 auf 6 Nachkommastellen
+      kommunen.push({ name, wert: pyRoundTo(wert, 2), kinder: pyRoundTo(kinder, 6) });
+    }
+    return { kommunen, uebersprungen, blatt: ws.name, kopfzeile };
+  }
+
+  function doppelteNamen(kommunen) {
+    const seen = new Map();
+    for (const k of kommunen) seen.set(k.name, (seen.get(k.name) || 0) + 1);
+    return [...seen].filter(([, n]) => n > 1).map(([name]) => name);
+  }
+
+  // ---------- Excel-Export (Aufbau wie exportiere_excel / erstelle_import_vorlage) ----------
+  const thin = { style: 'thin' };
+  const RAHMEN = { left: thin, right: thin, top: thin, bottom: thin };
+  const KOPF_FUELLUNG = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF366092' }, bgColor: { argb: 'FF366092' } };
+  const KOPF_SCHRIFT = { name: 'Calibri', size: 11, color: { argb: 'FFFFFFFF' }, bold: true };
+  const SUMME_FUELLUNG = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE7E6E6' }, bgColor: { argb: 'FFE7E6E6' } };
+  const FMT2 = '#,##0.00 €';
+  const FMT0 = '#,##0 €';
+
+  function kopfzeile(ws, zeile, texte) {
+    texte.forEach((t, i) => {
+      const c = ws.getCell(zeile, i + 1);
+      c.value = t; c.fill = KOPF_FUELLUNG; c.font = KOPF_SCHRIFT; c.border = RAHMEN; c.alignment = { horizontal: 'center' };
+    });
+  }
+
+  function baueErgebnisMappe(ExcelJS, erg) {
+    const wb = new ExcelJS.Workbook();
+    wb.creator = 'Fördermittel-Verteilungsrechner';
+    wb.created = new Date();
+    const ws = wb.addWorksheet('Fördermittelverteilung');
+    const { gesamtsumme, mindestbetrag, sockelProzent } = erg.params;
+
+    ws.getCell('A1').value = 'FÖRDERMITTELVERTEILUNG - BERECHNUNGSERGEBNIS';
+    ws.getCell('A1').font = { name: 'Calibri', size: 14, bold: true };
+    ws.mergeCells('A1:J1');
+    ws.getCell('A3').value = 'Parameter:';
+    ws.getCell('A3').font = { name: 'Calibri', size: 11, bold: true };
+    ws.getCell('B4').value = 'Gesamtsumme:';
+    ws.getCell('C4').value = gesamtsumme; ws.getCell('C4').numFmt = FMT2;
+    ws.getCell('B5').value = 'Mindestbetrag:';
+    ws.getCell('C5').value = mindestbetrag; ws.getCell('C5').numFmt = FMT2;
+    ws.getCell('B6').value = 'Sockelbetrag:';
+    ws.getCell('C6').value = pyFloatStr(sockelProzent * 100) + '%';
+
+    const start = 9;
+    kopfzeile(ws, start, ['Kommune', 'Wert 2019', 'Kinder U3', 'Sockelbetrag', 'U3-Anteil', 'Zwischensumme',
+      'Endbetrag (gerundet)', 'Endbetrag vor Rundung', 'Status', 'Runde', 'Erste Berechnung']);
+
+    erg.rows.forEach((r, i) => {
+      const z = start + 1 + i;
+      const werte = [r.name, r.wert, r.kinder, r.sockel, r.u3, r.zwischensumme, r.endbetrag, r.endVorRundung, r.status, r.runde, r.erste];
+      const formate = [null, FMT2, null, FMT2, FMT2, FMT2, FMT0, FMT2, null, null, FMT2];
+      werte.forEach((v, j) => {
+        const c = ws.getCell(z, j + 1);
+        c.value = v; c.border = RAHMEN;
+        if (formate[j]) c.numFmt = formate[j];
+      });
+      ws.getCell(z, 7).font = { name: 'Calibri', size: 11, bold: true };
+    });
+
+    const s = start + erg.rows.length + 1;
+    ws.getCell(s, 1).value = 'SUMME';
+    ws.getCell(s, 1).font = { name: 'Calibri', size: 11, bold: true };
+    const sumEnd = npSum(erg.rows.map((r) => r.endbetrag));
+    const sumVor = npSum(erg.rows.map((r) => r.endVorRundung));
+    [[7, sumEnd, FMT0], [8, sumVor, FMT2]].forEach(([col, v, f]) => {
+      const c = ws.getCell(s, col);
+      c.value = v; c.numFmt = f; c.font = { name: 'Calibri', size: 11, bold: true }; c.fill = SUMME_FUELLUNG;
+    });
+
+    [20, 15, 12, 15, 15, 15, 18, 20, 30, 10, 18].forEach((w, i) => { ws.getColumn(i + 1).width = w; });
+    return wb;
+  }
+
+  function baueVorlage(ExcelJS) {
+    const wb = new ExcelJS.Workbook();
+    wb.creator = 'Fördermittel-Verteilungsrechner';
+    wb.created = new Date();
+    const ws = wb.addWorksheet('Kommunendaten');
+    ws.getCell('A1').value = 'FÖRDERMITTELVERTEILUNG - IMPORT-VORLAGE';
+    ws.getCell('A1').font = { name: 'Calibri', size: 14, bold: true };
+    ws.mergeCells('A1:D1');
+    ws.getCell('A3').value = 'Anleitung:';
+    ws.getCell('A3').font = { name: 'Calibri', size: 11, bold: true };
+    ws.getCell('A4').value = '1. Tragen Sie die Daten der Kommunen in die Tabelle ein.';
+    ws.getCell('A5').value = '2. Speichern Sie die Datei und importieren Sie sie im Programm.';
+    kopfzeile(ws, 8, ['Kommune', 'Wert 2019 (€)', 'Kinder U3 im SGB-II-Bezug']);
+    ws.getCell('A9').value = 'Stadt Beispiel';
+    ws.getCell('B9').value = 50000;
+    ws.getCell('C9').value = 100;
+    for (let z = 10; z < 30; z++) for (let c = 1; c <= 3; c++) ws.getCell(z, c).border = RAHMEN;
+    ws.getColumn(1).width = 30; ws.getColumn(2).width = 20; ws.getColumn(3).width = 25;
+    return wb;
+  }
+
+  // ---------- Text für die Zwischenablage (Aufbau wie copy_to_clipboard) ----------
+  function zwischenablageText(erg) {
+    const { gesamtsumme, mindestbetrag, sockelProzent } = erg.params;
+    const pct = new Intl.NumberFormat('de-DE', { minimumFractionDigits: 1, maximumFractionDigits: 4 }).format(sockelProzent * 100);
+    const L = [];
+    L.push('FÖRDERMITTEL-VERTEILUNGSERGEBNIS');
+    L.push('='.repeat(50));
+    L.push(`Gesamtsumme: ${eur2(gesamtsumme).replace(' ', ' ')}`);
+    L.push(`Mindestbetrag: ${eur2(mindestbetrag).replace(' ', ' ')}`);
+    L.push(`Sockelbetrag: ${pct}%`);
+    L.push('');
+    L.push(`${'Kommune'.padEnd(20)} ${'Wert 2019'.padStart(12)} ${'Kinder U3'.padStart(10)} ${'Endbetrag'.padStart(12)} Status`);
+    L.push('-'.repeat(80));
+    for (const r of erg.rows) {
+      L.push(`${r.name.padEnd(20)} ${NF0.format(r.wert).padStart(12)} ${zahl(r.kinder).padStart(10)} ${NF0.format(r.endbetrag).padStart(12)} ${r.status.replace(/ /g, ' ')}`);
+    }
+    L.push('-'.repeat(80));
+    L.push(`${'SUMME'.padEnd(20)} ${''.padEnd(12)} ${''.padEnd(10)} ${NF0.format(npSum(erg.rows.map((r) => r.endbetrag))).padStart(12)}`);
+    return L.join('\n');
+  }
+
+  const BEISPIEL = [
+    ['Stadt A', 50000, 120], ['Stadt B', 35000, 85], ['Gemeinde C', 15000, 30], ['Gemeinde D', 8000, 15],
+    ['Stadt E', 45000, 95], ['Gemeinde F', 12000, 25], ['Stadt G', 60000, 140], ['Gemeinde H', 5000, 8],
+    ['Stadt I', 40000, 75], ['Gemeinde J', 18000, 35],
+  ];
+
+  return {
+    berechne, npSum, rint, pyFixed, pyRoundTo, pyFloatStr, parseEingabe, convertGermanNumber,
+    leseKommunen, doppelteNamen, ImportFehler, baueErgebnisMappe, baueVorlage, zwischenablageText,
+    eur0, eur2, eurSigned, zahl, BEISPIEL, MAX_RUNDEN,
+  };
+})();
+/*RECHNER-END*/
+
+(() => {
+  'use strict';
+  const R = Rechner;
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const KEY = 'foerdermittelrechner.v1';
+  const EXCELJS_URL = 'https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js';
+  const EXCELJS_SRI = 'sha384-Pqp51FUN2/qzfxZxBCtF0stpc9ONI6MYZpVqmo8m20SoaQCzf+arZvACkLkirlPz';
+  const NF_EUR_IN = new Intl.NumberFormat('de-DE', { maximumFractionDigits: 2 });
+  const NF_PCT_IN = new Intl.NumberFormat('de-DE', { maximumFractionDigits: 4 });
+
+  let nextId = 1;
+  const mitId = (k) => ({ id: nextId++, name: k.name, wert: k.wert, kinder: k.kinder });
+  const beispielKommunen = () => R.BEISPIEL.map(([name, wert, kinder]) => mitId({ name, wert, kinder }));
+
+  const state = {
+    params: { gesamt: '500.000', mindest: '12.500', sockel: '50' },
+    kommunen: [],
+    beispiel: false,
+    editId: null,
+    result: null,
+  };
+
+  // ---------- Speicherung im Browser ----------
+  function speichern() {
+    try {
+      localStorage.setItem(KEY, JSON.stringify({
+        params: state.params,
+        kommunen: state.kommunen.map(({ name, wert, kinder }) => ({ name, wert, kinder })),
+        beispiel: state.beispiel,
+      }));
+    } catch (e) { /* Speicher nicht verfügbar */ }
+  }
+  let speicherTimer = 0;
+  const speichernBald = () => { clearTimeout(speicherTimer); speicherTimer = setTimeout(speichern, 250); };
+
+  function laden() {
+    try {
+      const raw = localStorage.getItem(KEY);
+      if (!raw) return false;
+      const d = JSON.parse(raw);
+      if (!d || !Array.isArray(d.kommunen) || !d.params) return false;
+      const ok = (k) => k && typeof k.name === 'string' && Number.isFinite(k.wert) && Number.isFinite(k.kinder);
+      state.kommunen = d.kommunen.filter(ok).map(mitId);
+      for (const key of ['gesamt', 'mindest', 'sockel']) if (typeof d.params[key] === 'string') state.params[key] = d.params[key];
+      state.beispiel = !!d.beispiel;
+      return true;
+    } catch (e) { return false; }
+  }
+
+  // ---------- Hinweise unten und Rückgängig ----------
+  let toastTimer = 0;
+  let toastAction = null;
+  function toast(text, opts = {}) {
+    $('toast-text').textContent = text;
+    const btn = $('toast-action');
+    toastAction = opts.onAction || null;
+    btn.hidden = !opts.action;
+    btn.textContent = opts.action || '';
+    $('toast').hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { $('toast').hidden = true; toastAction = null; }, opts.dauer || (opts.action ? 7000 : 3800));
+  }
+  $('toast-action').addEventListener('click', () => {
+    const fn = toastAction;
+    $('toast').hidden = true; toastAction = null;
+    if (fn) fn();
+  });
+  const sicherung = () => ({ kommunen: state.kommunen.map((k) => ({ ...k })), beispiel: state.beispiel });
+  function mitRueckgaengig(text, vorher) {
+    toast(text, { action: 'Rückgängig', onAction: () => {
+      state.kommunen = vorher.kommunen; state.beispiel = vorher.beispiel;
+      abbrechenBearbeiten(); kommunenGeaendert();
+      toast('Rückgängig gemacht.');
+    } });
+  }
+
+  // ---------- Dialoge ----------
+  function oeffne(dlg) { if (typeof dlg.showModal === 'function') dlg.showModal(); else dlg.setAttribute('open', ''); }
+  function schliesse(dlg) { if (typeof dlg.close === 'function') dlg.close(); else dlg.removeAttribute('open'); }
+  document.querySelectorAll('dialog [data-close]').forEach((b) => b.addEventListener('click', () => schliesse(b.closest('dialog'))));
+  document.querySelectorAll('dialog.dlg').forEach((d) => d.addEventListener('click', (e) => { if (e.target === d && d.id !== 'dlg-frage') schliesse(d); }));
+
+  let frageResolve = null;
+  function frage({ titel, text, hinweise = [], buttons }) {
+    const dlg = $('dlg-frage');
+    $('df-title').textContent = titel;
+    $('df-body').innerHTML = `<p>${esc(text)}</p>` + (hinweise.length ? `<ul>${hinweise.map((h) => `<li>${esc(h)}</li>`).join('')}</ul>` : '');
+    const foot = $('df-foot');
+    foot.innerHTML = '';
+    return new Promise((resolve) => {
+      frageResolve = resolve;
+      buttons.forEach((b) => {
+        const el = document.createElement('button');
+        el.type = 'button';
+        el.className = 'btn' + (b.primary ? ' btn-primary' : '');
+        el.textContent = b.label;
+        el.addEventListener('click', () => { frageResolve = null; schliesse(dlg); resolve(b.value); });
+        foot.appendChild(el);
+      });
+      oeffne(dlg);
+      const primary = foot.querySelector('.btn-primary');
+      if (primary) primary.focus();
+    });
+  }
+  $('dlg-frage').addEventListener('close', () => { if (frageResolve) { const r = frageResolve; frageResolve = null; r(null); } });
+  const meldung = (titel, text, hinweise) => frage({ titel, text, hinweise, buttons: [{ label: 'OK', value: true, primary: true }] });
+
+  $('btn-methode').addEventListener('click', () => oeffne($('dlg-methode')));
+  $('btn-about').addEventListener('click', () => oeffne($('dlg-about')));
+  $('btn-mail-copy').addEventListener('click', () => kopiere('marco@dabenta.de', 'E-Mail-Adresse kopiert.', () => {
+    const r = document.createRange(); r.selectNodeContents($('about-mail'));
+    const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(r);
+    toast('Adresse markiert. Mit Strg+C kopieren.');
+  }));
+
+  // ---------- Zwischenablage ----------
+  function kopiere(text, okText, fallback) {
+    let p;
+    try { p = navigator.clipboard && navigator.clipboard.writeText(text); } catch (e) { p = null; }
+    if (!p) { fallback(); return; }
+    p.then(() => toast(okText), fallback);
+  }
+
+  // ---------- Dateien speichern ----------
+  let downloadsPromise = null;
+  function downloads() {
+    if (!window.claude || typeof window.claude.use !== 'function') return Promise.resolve(undefined);
+    if (!downloadsPromise) downloadsPromise = Promise.resolve().then(() => window.claude.use('downloads')).catch(() => null);
+    return downloadsPromise;
+  }
+  async function speichereDatei(filename, blob) {
+    const dl = await downloads();
+    if (dl) {
+      try {
+        const res = await dl.save({ filename, data: blob });
+        if (!res || res.status !== 'delivered') toast(`„${filename}“ gespeichert.`);
+      } catch (e) {
+        const code = e && e.code;
+        if (code === 'declined') return;
+        if (code === 'rate_limited') toast('Bitte einen Moment warten und dann erneut versuchen.');
+        else toast('Die Datei konnte in dieser Ansicht nicht gespeichert werden.');
+      }
+      return;
+    }
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename; a.rel = 'noopener';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+    if (dl === null) toast('Falls kein Download startet, öffnen Sie den Rechner direkt in claude.ai.');
+  }
+
+  // ---------- Excel-Bibliothek ----------
+  let excelPromise = null;
+  function ladeExcelJS() {
+    if (window.ExcelJS) return Promise.resolve(window.ExcelJS);
+    if (!excelPromise) {
+      excelPromise = new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        s.src = EXCELJS_URL; s.integrity = EXCELJS_SRI; s.crossOrigin = 'anonymous'; s.async = true;
+        s.onload = () => (window.ExcelJS ? resolve(window.ExcelJS) : reject(new Error('missing')));
+        s.onerror = () => reject(new Error('load'));
+        document.head.appendChild(s);
+      }).catch((e) => { excelPromise = null; throw e; });
+    }
+    return excelPromise;
+  }
+  async function excel() {
+    try { return await ladeExcelJS(); } catch (e) {
+      await meldung('Excel-Funktionen nicht verfügbar', 'Die Excel-Komponente konnte nicht geladen werden. Bitte prüfen Sie die Internetverbindung und versuchen Sie es erneut.');
+      return null;
+    }
+  }
+  const XLSX_TYPE = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+  async function mappeAlsBlob(wb) { return new Blob([await wb.xlsx.writeBuffer()], { type: XLSX_TYPE }); }
+  const zeitstempel = () => {
+    const d = new Date(); const p = (n) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}_${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}`;
+  };
+
+  // ---------- Parameter ----------
+  const PF = { gesamt: $('p-gesamt'), mindest: $('p-mindest'), sockel: $('p-sockel') };
+  function leseParameter() {
+    const g = R.parseEingabe(state.params.gesamt);
+    const m = R.parseEingabe(state.params.mindest);
+    const s = R.parseEingabe(state.params.sockel);
+    const errors = {};
+    if (!Number.isFinite(g)) errors.gesamt = 'Bitte eine Zahl eingeben, z. B. 500.000.';
+    else if (g <= 0) errors.gesamt = 'Die Gesamtsumme muss größer als 0 sein.';
+    if (!Number.isFinite(m)) errors.mindest = 'Bitte eine Zahl eingeben, z. B. 12.500.';
+    else if (m < 0) errors.mindest = 'Der Mindestbetrag darf nicht negativ sein.';
+    if (!Number.isFinite(s)) errors.sockel = 'Bitte eine Zahl zwischen 0 und 100 eingeben.';
+    else if (s < 0 || s > 100) errors.sockel = 'Bitte einen Wert zwischen 0 und 100 eingeben.';
+    return { ok: Object.keys(errors).length === 0, errors, werte: { gesamtsumme: g, mindestbetrag: m, sockelProzent: s / 100 } };
+  }
+  function zeigeParameterFehler(errors) {
+    for (const key of Object.keys(PF)) {
+      const e = $('e-' + key);
+      const msg = errors[key];
+      e.hidden = !msg; e.textContent = msg || '';
+      PF[key].setAttribute('aria-invalid', msg ? 'true' : 'false');
+    }
+  }
+  let rechenTimer = 0;
+  for (const [key, input] of Object.entries(PF)) {
+    input.addEventListener('input', () => {
+      state.params[key] = input.value;
+      speichernBald();
+      clearTimeout(rechenTimer);
+      rechenTimer = setTimeout(neuBerechnen, 160);
+    });
+    input.addEventListener('blur', () => {
+      const n = R.parseEingabe(input.value);
+      if (Number.isFinite(n)) {
+        input.value = (key === 'sockel' ? NF_PCT_IN : NF_EUR_IN).format(n);
+        state.params[key] = input.value; speichernBald();
+      }
+    });
+  }
+  $('form-params').addEventListener('submit', (e) => e.preventDefault());
+
+  // ---------- Kommunen ----------
+  const KF = { name: $('k-name'), wert: $('k-wert'), kinder: $('k-kinder') };
+
+  function zeigeKommuneFehler(msg, feld) {
+    const e = $('k-error');
+    e.hidden = !msg; e.textContent = msg || '';
+    for (const [key, input] of Object.entries(KF)) input.setAttribute('aria-invalid', msg && key === feld ? 'true' : 'false');
+    if (msg && feld) KF[feld].focus();
+  }
+
+  $('form-kommune').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const name = KF.name.value.trim();
+    if (!name) return zeigeKommuneFehler('Bitte einen Namen eingeben.', 'name');
+    if (state.kommunen.some((k) => k.name === name && k.id !== state.editId)) return zeigeKommuneFehler(`„${name}“ ist bereits eingetragen. Bitte einen anderen Namen verwenden.`, 'name');
+    const wert = R.parseEingabe(KF.wert.value);
+    if (!Number.isFinite(wert)) return zeigeKommuneFehler('Wert 2019: bitte eine Zahl eingeben, z. B. 35.000.', 'wert');
+    const kinder = R.parseEingabe(KF.kinder.value);
+    if (!Number.isFinite(kinder)) return zeigeKommuneFehler('Kinder U3: bitte eine Zahl eingeben, z. B. 85.', 'kinder');
+    if (wert < 0) return zeigeKommuneFehler('Der Wert 2019 darf nicht negativ sein.', 'wert');
+    if (kinder < 0) return zeigeKommuneFehler('Die Zahl der Kinder U3 darf nicht negativ sein.', 'kinder');
+    zeigeKommuneFehler('');
+    // Wie in der Desktop-Version wird der Wert 2019 auf Cent übernommen
+    const daten = { name, wert: R.pyRoundTo(wert, 2), kinder };
+    if (state.editId !== null) {
+      const k = state.kommunen.find((x) => x.id === state.editId);
+      if (k) Object.assign(k, daten);
+      toast(`„${name}“ geändert.`);
+      abbrechenBearbeiten();
+    } else {
+      state.kommunen.push(mitId(daten));
+      toast(`„${name}“ hinzugefügt.`);
+      KF.name.value = ''; KF.wert.value = ''; KF.kinder.value = '';
+    }
+    state.beispiel = false;
+    kommunenGeaendert();
+    KF.name.focus();
+  });
+
+  function bearbeiten(id) {
+    const k = state.kommunen.find((x) => x.id === id);
+    if (!k) return;
+    state.editId = id;
+    KF.name.value = k.name;
+    KF.wert.value = NF_EUR_IN.format(k.wert);
+    KF.kinder.value = R.zahl(k.kinder);
+    $('k-submit').textContent = 'Änderung speichern';
+    $('k-cancel').hidden = false;
+    zeigeKommuneFehler('');
+    renderKommunen();
+    KF.name.focus(); KF.name.select();
+  }
+  function abbrechenBearbeiten() {
+    if (state.editId === null) return;
+    state.editId = null;
+    KF.name.value = ''; KF.wert.value = ''; KF.kinder.value = '';
+    $('k-submit').textContent = 'Hinzufügen';
+    $('k-cancel').hidden = true;
+    zeigeKommuneFehler('');
+    renderKommunen();
+  }
+  $('k-cancel').addEventListener('click', abbrechenBearbeiten);
+  $('form-kommune').addEventListener('keydown', (e) => { if (e.key === 'Escape' && state.editId !== null) { e.preventDefault(); abbrechenBearbeiten(); } });
+
+  function loeschen(id) {
+    const k = state.kommunen.find((x) => x.id === id);
+    if (!k) return;
+    const vorher = sicherung();
+    if (state.editId === id) abbrechenBearbeiten();
+    state.kommunen = state.kommunen.filter((x) => x.id !== id);
+    state.beispiel = false;
+    kommunenGeaendert();
+    mitRueckgaengig(`„${k.name}“ gelöscht.`, vorher);
+  }
+
+  $('k-body').addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-act]');
+    if (!btn) return;
+    const id = Number(btn.closest('tr').dataset.id);
+    if (btn.dataset.act === 'edit') bearbeiten(id); else loeschen(id);
+  });
+  $('k-body').addEventListener('dblclick', (e) => {
+    const tr = e.target.closest('tr[data-id]');
+    if (tr && !e.target.closest('button')) bearbeiten(Number(tr.dataset.id));
+  });
+
+  $('btn-clear').addEventListener('click', () => {
+    if (!state.kommunen.length) return;
+    const vorher = sicherung();
+    const n = state.kommunen.length;
+    abbrechenBearbeiten();
+    state.kommunen = []; state.beispiel = false;
+    kommunenGeaendert();
+    mitRueckgaengig(`${n} Kommunen gelöscht.`, vorher);
+  });
+  $('btn-beispiel').addEventListener('click', () => {
+    const vorher = sicherung();
+    abbrechenBearbeiten();
+    state.kommunen = beispielKommunen(); state.beispiel = true;
+    kommunenGeaendert();
+    if (vorher.kommunen.length && !vorher.beispiel) mitRueckgaengig('Beispieldaten geladen.', vorher);
+    else toast('Beispieldaten geladen.');
+  });
+  $('btn-beispiel-weg').addEventListener('click', () => {
+    const vorher = sicherung();
+    abbrechenBearbeiten();
+    state.kommunen = []; state.beispiel = false;
+    kommunenGeaendert();
+    mitRueckgaengig('Beispieldaten entfernt.', vorher);
+    KF.name.focus();
+  });
+
+  function renderKommunen() {
+    const n = state.kommunen.length;
+    $('k-count').textContent = n === 1 ? '1 Eintrag' : `${R.zahl(n)} Einträge`;
+    $('k-empty').hidden = n > 0;
+    $('k-table').hidden = n === 0;
+    $('note-beispiel').hidden = !(state.beispiel && n > 0);
+    $('k-body').innerHTML = state.kommunen.map((k) => `<tr data-id="${k.id}"${k.id === state.editId ? ' class="editing"' : ''}>
+      <td class="name">${esc(k.name)}</td><td class="r">${R.eur2(k.wert)}</td><td class="r">${R.zahl(k.kinder)}</td>
+      <td class="act"><div class="row-actions">
+        <button class="icon-btn" type="button" data-act="edit" aria-label="${esc(k.name)} bearbeiten" title="Bearbeiten"><svg class="ic" aria-hidden="true"><use href="#i-edit"/></svg></button>
+        <button class="icon-btn del" type="button" data-act="del" aria-label="${esc(k.name)} löschen" title="Löschen"><svg class="ic" aria-hidden="true"><use href="#i-del"/></svg></button>
+      </div></td></tr>`).join('');
+    const doppelt = R.doppelteNamen(state.kommunen);
+    $('note-doppelt').hidden = doppelt.length === 0;
+    $('note-doppelt-text').textContent = doppelt.length
+      ? `Mehrfach eingetragen: ${doppelt.slice(0, 6).join(', ')}${doppelt.length > 6 ? ' …' : ''}. Bitte doppelte Einträge prüfen, die Desktop-Version lässt doppelte Namen nicht zu.`
+      : '';
+    $('btn-clear').disabled = n === 0;
+  }
+
+  function kommunenGeaendert() {
+    renderKommunen();
+    speichernBald();
+    neuBerechnen();
+  }
+
+  // ---------- Excel-Import ----------
+  $('btn-import').addEventListener('click', () => $('file-import').click());
+  $('file-import').addEventListener('change', (e) => {
+    const f = e.target.files && e.target.files[0];
+    e.target.value = '';
+    if (f) importiere(f);
+  });
+  const panelK = $('panel-kommunen');
+  let dragTiefe = 0;
+  const hatDateien = (e) => e.dataTransfer && Array.from(e.dataTransfer.types || []).includes('Files');
+  panelK.addEventListener('dragenter', (e) => { if (!hatDateien(e)) return; e.preventDefault(); dragTiefe++; panelK.classList.add('dragover'); });
+  panelK.addEventListener('dragover', (e) => { if (!hatDateien(e)) return; e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; });
+  panelK.addEventListener('dragleave', () => { dragTiefe = Math.max(0, dragTiefe - 1); if (!dragTiefe) panelK.classList.remove('dragover'); });
+  panelK.addEventListener('drop', (e) => {
+    if (!hatDateien(e)) return;
+    e.preventDefault(); dragTiefe = 0; panelK.classList.remove('dragover');
+    const f = e.dataTransfer.files && e.dataTransfer.files[0];
+    if (f) importiere(f);
+  });
+
+  async function importiere(file) {
+    const dateiname = file.name || 'Datei';
+    if (/\.xls$/i.test(dateiname)) {
+      await meldung('Altes Excel-Format', 'Dateien im Format .xls kann der Rechner nicht lesen. Speichern Sie die Datei in Excel über „Speichern unter“ als Excel-Arbeitsmappe (.xlsx) und importieren Sie sie erneut.');
+      return;
+    }
+    const ExcelJS = await excel();
+    if (!ExcelJS) return;
+    let gelesen;
+    try {
+      const wb = new ExcelJS.Workbook();
+      await wb.xlsx.load(await file.arrayBuffer());
+      gelesen = R.leseKommunen(wb);
+    } catch (err) {
+      const text = err instanceof R.ImportFehler ? err.message : `„${dateiname}“ konnte nicht gelesen werden. Bitte eine Excel-Arbeitsmappe (.xlsx) auswählen.`;
+      await meldung('Import nicht möglich', text);
+      return;
+    }
+    const neu = gelesen.kommunen;
+    const hinweise = [];
+    if (gelesen.uebersprungen) hinweise.push(`${gelesen.uebersprungen === 1 ? 'Eine Zeile wurde' : gelesen.uebersprungen + ' Zeilen wurden'} übersprungen, weil Name oder Zahlen fehlen oder ungültig sind.`);
+    if (!neu.length) {
+      await meldung('Keine Daten gefunden', `In „${dateiname}“ (Blatt „${gelesen.blatt}“) wurden keine gültigen Kommunendaten gefunden.`, hinweise);
+      return;
+    }
+    const doppelt = R.doppelteNamen(neu);
+    if (doppelt.length) hinweise.push(`Mehrfach vorhandene Namen: ${doppelt.slice(0, 6).join(', ')}${doppelt.length > 6 ? ' …' : ''}.`);
+    if (neu.some((k) => k.name === 'Stadt Beispiel' && k.wert === 50000 && k.kinder === 100)) hinweise.push('Die Beispielzeile „Stadt Beispiel“ aus der Vorlage ist enthalten.');
+
+    const anzahl = neu.length === 1 ? 'Eine Kommune' : `${R.zahl(neu.length)} Kommunen`;
+    let modus = 'ersetzen';
+    if (state.kommunen.length) {
+      const vorhanden = state.beispiel ? 'die Beispieldaten' : `die ${R.zahl(state.kommunen.length)} vorhandenen Kommunen`;
+      modus = await frage({
+        titel: 'Excel-Import',
+        text: `${anzahl} in „${dateiname}“ gefunden (Blatt „${gelesen.blatt}“). Sollen sie ${vorhanden} ersetzen oder angehängt werden?`,
+        hinweise,
+        buttons: [{ label: 'Abbrechen', value: null }, { label: 'Anhängen', value: 'anhaengen' }, { label: 'Ersetzen', value: 'ersetzen', primary: true }],
+      });
+      if (!modus) return;
+    } else if (hinweise.length) {
+      const ok = await frage({
+        titel: 'Excel-Import',
+        text: `${anzahl} in „${dateiname}“ gefunden (Blatt „${gelesen.blatt}“).`,
+        hinweise,
+        buttons: [{ label: 'Abbrechen', value: null }, { label: 'Importieren', value: true, primary: true }],
+      });
+      if (!ok) return;
+    }
+    const vorher = sicherung();
+    abbrechenBearbeiten();
+    state.kommunen = (modus === 'anhaengen' ? state.kommunen : []).concat(neu.map(mitId));
+    state.beispiel = false;
+    kommunenGeaendert();
+    mitRueckgaengig(`${anzahl} importiert.`, vorher);
+  }
+
+  $('btn-vorlage').addEventListener('click', async () => {
+    const ExcelJS = await excel();
+    if (!ExcelJS) return;
+    await speichereDatei('import_vorlage.xlsx', await mappeAlsBlob(R.baueVorlage(ExcelJS)));
+  });
+
+  // ---------- Berechnung und Ergebnis ----------
+  function neuBerechnen() {
+    clearTimeout(rechenTimer);
+    const p = leseParameter();
+    zeigeParameterFehler(p.errors);
+    renderGrundlage(p);
+    if (!p.ok) return zeigeLeer('Das Ergebnis erscheint, sobald die Parameter gültig sind.');
+    if (!state.kommunen.length) return zeigeLeer('Das Ergebnis erscheint, sobald mindestens eine Kommune eingetragen ist.');
+    state.result = R.berechne(state.kommunen, p.werte);
+    renderErgebnis(state.result);
+    renderProtokoll(state.result);
+  }
+
+  function renderGrundlage(p) {
+    const ks = state.kommunen;
+    $('g-anzahl').textContent = R.zahl(ks.length);
+    $('g-wert').textContent = R.eur2(R.npSum(ks.map((k) => k.wert)));
+    $('g-kinder').textContent = R.zahl(R.npSum(ks.map((k) => k.kinder)));
+    $('g-sockel').textContent = p.errors.sockel ? '–' : R.eur2(R.npSum(ks.map((k) => k.wert * p.werte.sockelProzent)));
+  }
+
+  function zeigeLeer(text) {
+    state.result = null;
+    $('r-empty').textContent = text;
+    $('r-empty').hidden = false;
+    $('r-content').hidden = true;
+    $('r-check').hidden = true;
+    $('btn-export').disabled = true;
+    $('btn-copy').disabled = true;
+    $('p-kurz').textContent = '';
+    $('p-body').innerHTML = `<p class="empty">${esc(text)}</p>`;
+  }
+
+  const pctText = (x) => new Intl.NumberFormat('de-DE', { maximumFractionDigits: 4 }).format(x * 100) + ' %';
+
+  function balken(r, maxEnd, mindest) {
+    const end = Math.max(r.endbetrag, 0);
+    const sockel = Math.max(0, Math.min(r.sockel, end));
+    let u3; let auf = 0;
+    if (r.art === 'mindest') { u3 = Math.max(0, Math.min(r.u3, end - sockel)); auf = Math.max(0, end - sockel - u3); }
+    else u3 = Math.max(0, end - sockel);
+    const w = (v) => (v / maxEnd * 100).toFixed(3) + '%';
+    const teile = [`Sockelbetrag ${R.eur0(sockel)}`, `U3-Anteil ${R.eur0(u3)}`];
+    if (auf > 0) teile.push(`Aufstockung ${R.eur0(auf)}`);
+    const tick = mindest > 0 && mindest <= maxEnd ? `<i style="left:${w(mindest)}"></i>` : '';
+    return `<div class="dist" role="img" aria-label="${esc(teile.join(', '))}"><div class="seg"><span class="s-sockel" style="width:${w(sockel)}"></span><span class="s-u3" style="width:${w(u3)}"></span>${auf > 0 ? `<span class="s-auf" style="width:${w(auf)}"></span>` : ''}</div>${tick}</div>`;
+  }
+
+  function statusChips(r) {
+    const art = {
+      ok: ['chip-ok', 'OK'],
+      mindest: ['chip-min', `Mindestbetrag (Runde ${r.runde})`],
+      runde1: ['chip-r1', 'Wert aus Runde 1'],
+      offen: ['chip-adj', 'In Berechnung'],
+    }[r.art] || ['chip-adj', r.status];
+    let html = `<span class="chip ${art[0]}">${esc(art[1])}</span>`;
+    if (r.ausgleich) html += `<span class="chip chip-adj">Ausgleich ${esc(R.eurSigned(r.ausgleich))}</span>`;
+    return `<div class="chips" title="${esc(r.status)}">${html}</div>`;
+  }
+
+  function renderErgebnis(erg) {
+    $('r-empty').hidden = true;
+    $('r-content').hidden = false;
+    $('btn-export').disabled = false;
+    $('btn-copy').disabled = false;
+    const { rows, runden, validierung, params } = erg;
+    const n = rows.length;
+    const nMin = rows.filter((r) => r.art === 'mindest').length;
+    const nR1 = rows.filter((r) => r.art === 'runde1').length;
+    const letzte = runden[runden.length - 1];
+
+    const check = $('r-check');
+    check.hidden = false;
+    if (validierung.ok) { check.className = 'pill pill-ok'; check.textContent = '✓ Gesamtsumme exakt verteilt'; }
+    else { check.className = 'pill pill-warn'; check.textContent = `Abweichung ${R.eur2(validierung.differenz)}`; }
+
+    const fest = [nMin ? `${R.zahl(nMin)} auf Mindestbetrag` : '', nR1 ? `${R.zahl(nR1)} mit Wert aus Runde 1` : ''].filter(Boolean).join(', ') || 'keine festgesetzt';
+    const items = [
+      ['Verteilt', R.eur0(validierung.ist), `Soll ${R.eur0(params.gesamtsumme)}`],
+      ['Kommunen', R.zahl(n), fest],
+      ['Durchschnitt', R.eur0(validierung.ist / n), 'je Kommune'],
+      ['Mindestbetrag', R.eur0(params.mindestbetrag), `Sockel ${pctText(params.sockelProzent)}`],
+      ['Multiplikator', letzte ? R.eur2(letzte.mult) : '–', letzte ? `je Kind U3, Runde ${letzte.runde}` : ''],
+      ['Runden', R.zahl(runden.length), erg.abgeschlossen ? 'abgeschlossen' : 'nicht abgeschlossen'],
+    ];
+    $('r-summary').innerHTML = items.map(([dt, dd, small]) => `<div><dt>${dt}</dt><dd>${esc(dd)}<small>${esc(small)}</small></dd></div>`).join('');
+
+    $('r-formel').innerHTML = letzte
+      ? `Endbetrag = <b>${esc(pctText(params.sockelProzent))}</b> × Wert 2019 + <b>${esc(R.eur2(letzte.mult))}</b> × Kinder U3, mindestens <b>${esc(R.eur0(params.mindestbetrag))}</b>`
+      : '';
+
+    const w = $('r-warnings');
+    w.hidden = erg.hinweise.length === 0;
+    w.innerHTML = erg.hinweise.map((h) => `<div class="warn"><svg class="ic" aria-hidden="true"><use href="#i-warn"/></svg><p>${esc(h)}</p></div>`).join('');
+
+    const maxEnd = Math.max(1, ...rows.map((r) => r.endbetrag));
+    $('r-body').innerHTML = rows.map((r) => `<tr>
+      <td class="name">${esc(r.name)}</td>
+      <td class="r">${R.eur0(r.wert)}</td>
+      <td class="r">${R.zahl(r.kinder)}</td>
+      <td class="r">${R.eur2(r.sockel)}</td>
+      <td class="r">${R.eur2(r.u3)}</td>
+      <td class="r">${R.eur2(r.zwischensumme)}</td>
+      <td class="r strong">${R.eur0(r.endbetrag)}</td>
+      <td>${balken(r, maxEnd, params.mindestbetrag)}</td>
+      <td>${statusChips(r)}</td></tr>`).join('');
+    $('r-foot').innerHTML = `<tr><td>Summe</td><td class="r">${R.eur0(R.npSum(rows.map((r) => r.wert)))}</td><td class="r">${R.zahl(R.npSum(rows.map((r) => r.kinder)))}</td>
+      <td class="r">${R.eur2(R.npSum(rows.map((r) => r.sockel)))}</td><td></td><td></td><td class="r">${R.eur0(validierung.ist)}</td><td></td><td></td></tr>`;
+  }
+
+  function renderProtokoll(erg) {
+    const { runden, rundung, validierung, params } = erg;
+    $('p-kurz').textContent = `${R.zahl(runden.length)} ${runden.length === 1 ? 'Runde' : 'Runden'}`;
+    const art = { mindest: 'Mindestbetrag', runde1: 'Wert aus Runde 1' };
+    const zeilen = runden.map((x) => `<tr><td>${x.runde}</td><td class="r">${R.zahl(x.aktiv)}</td><td class="r">${R.eur2(x.verfuegbar)}</td><td class="r">${R.eur2(x.summeSockel)}</td><td class="r">${R.eur2(x.rest)}</td><td class="r">${R.zahl(x.summeU3)}</td><td class="r">${R.eur2(x.mult)}</td><td class="r">${R.zahl(x.neu.length)}</td></tr>`).join('');
+    const fix = runden.filter((x) => x.neu.length).map((x) => `<li><b>Runde ${x.runde}:</b> ${x.neu.map((k) => `${esc(k.name)} (${art[k.art]}, ${esc(R.eur2(k.betrag))})`).join(', ')}</li>`).join('');
+    const a = rundung.ausgleich;
+    $('p-body').innerHTML = `
+      <div class="table-wrap"><table class="tbl">
+        <thead><tr><th>Runde</th><th class="r">Aktive Kommunen</th><th class="r">Verfügbares Budget</th><th class="r">Summe Sockelbeträge</th><th class="r">Restbudget für U3</th><th class="r">Kinder U3</th><th class="r">Multiplikator je Kind</th><th class="r">Neu festgesetzt</th></tr></thead>
+        <tbody>${zeilen}</tbody></table></div>
+      ${fix ? `<ul class="fixliste">${fix}</ul>` : '<p class="hint" style="margin-top:12px">Keine Kommune musste festgesetzt werden.</p>'}
+      <div class="kv">
+        <div><p class="eyebrow">Rundung auf ganze Euro</p><dl>
+          <div><dt>Summe vor Rundung</dt><dd>${R.eur2(rundung.summeVor)}</dd></div>
+          <div><dt>Summe nach Rundung</dt><dd>${R.eur0(rundung.summeNach)}</dd></div>
+          <div><dt>Rundungsdifferenz</dt><dd>${R.eurSigned(rundung.differenz)}</dd></div>
+          <div><dt>Ausgleich</dt><dd>${a ? `${esc(a.name)}: ${R.eur0(a.alt)} → ${R.eur0(a.neu)}` : 'nicht nötig'}</dd></div>
+        </dl></div>
+        <div><p class="eyebrow">Prüfung</p><dl>
+          <div><dt>Gesamtsumme (Soll)</dt><dd>${R.eur2(params.gesamtsumme)}</dd></div>
+          <div><dt>Verteilt (Ist)</dt><dd>${R.eur2(validierung.ist)}</dd></div>
+          <div><dt>Differenz</dt><dd>${R.eur2(validierung.differenz)}</dd></div>
+          <div><dt>Ergebnis</dt><dd>${validierung.ok ? '✓ Prüfung bestanden' : 'Differenz größer als 1 Cent'}</dd></div>
+        </dl></div>
+      </div>`;
+  }
+
+  // ---------- Export und Zwischenablage ----------
+  $('btn-export').addEventListener('click', exportiere);
+  async function exportiere() {
+    if (!state.result) return;
+    const erg = state.result;
+    const ExcelJS = await excel();
+    if (!ExcelJS) return;
+    const blob = await mappeAlsBlob(R.baueErgebnisMappe(ExcelJS, erg));
+    await speichereDatei(`foerdermittel_ergebnis_${zeitstempel()}.xlsx`, blob);
+  }
+  $('btn-copy').addEventListener('click', () => {
+    if (!state.result) return;
+    const text = R.zwischenablageText(state.result);
+    kopiere(text, 'Ergebnis in die Zwischenablage kopiert.', () => {
+      const ta = $('dc-text');
+      ta.value = text;
+      oeffne($('dlg-copy'));
+      ta.focus(); ta.select();
+    });
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (!(e.ctrlKey || e.metaKey) || e.altKey || e.shiftKey) return;
+    if (document.querySelector('dialog[open]')) return;
+    const k = e.key.toLowerCase();
+    if (k === 's') { e.preventDefault(); exportiere(); }
+    else if (k === 'o') { e.preventDefault(); $('file-import').click(); }
+  });
+
+  // ---------- Start ----------
+  if (!laden()) { state.kommunen = beispielKommunen(); state.beispiel = true; }
+  for (const [key, input] of Object.entries(PF)) input.value = state.params[key];
+  renderKommunen();
+  neuBerechnen();
+  downloads();
+  const vorladen = () => { ladeExcelJS().catch(() => {}); };
+  if ('requestIdleCallback' in window) requestIdleCallback(vorladen, { timeout: 4000 }); else setTimeout(vorladen, 1500);
+})();
+</script>

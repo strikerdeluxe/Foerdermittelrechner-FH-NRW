@@ -42,3 +42,6 @@ Thumbs.db
 
 # Logs
 *.log
+# Web-Version
+node_modules/
+web/test/reference.json
