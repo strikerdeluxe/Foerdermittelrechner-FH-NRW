@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Fördermittel-Verteilungsrechner</title>
+<style>
+/* Passwortabfrage vor der verschlüsselten Anwendung. Farben wie in der Anwendung. */
+:root{
+  --bg:#f1f4f7; --surface:#ffffff; --field:#ffffff; --ink:#16202b; --muted:#566373;
+  --line:#d7dee6; --line-strong:#b6c1cd; --accent:#2b5a8d; --accent-ink:#ffffff; --danger:#b3261e;
+  --font-display:"Source Serif 4","Source Serif Pro",Georgia,"Times New Roman",serif;
+  --font-ui:"IBM Plex Sans","Segoe UI",system-ui,-apple-system,Roboto,"Helvetica Neue",Arial,sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0e141b; --surface:#151e28; --field:#111922; --ink:#e3e9ef; --muted:#98a6b6;
+    --line:#283442; --line-strong:#3a4757; --accent:#88b0e0; --accent-ink:#0e141b; --danger:#f2a49c;
+    color-scheme:dark;
+  }
+}
+*,*::before,*::after{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;display:grid;place-items:center;background:var(--bg);color:var(--ink);font:400 15px/1.5 var(--font-ui);
+  padding-block:24px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+[hidden]{display:none!important}
+.card{width:100%;max-width:400px;padding:28px;background:var(--surface);border:1px solid var(--line);border-radius:8px}
+h1{margin:0;font:600 23px/1.2 var(--font-display);text-wrap:balance}
+.sub{margin:6px 0 22px;color:var(--muted);font-size:14px}
+.lbl{display:block;margin-bottom:5px;font-size:13px;font-weight:500;color:var(--muted)}
+#pw{width:100%;padding:9px 11px;border:1px solid var(--line-strong);border-radius:6px;background:var(--field);color:var(--ink);font:inherit;font-size:16px}
+#pw:focus{outline:2px solid var(--accent);outline-offset:-1px;border-color:var(--accent)}
+#pw[aria-invalid="true"]{border-color:var(--danger)}
+.err{margin:8px 0 0;color:var(--danger);font-size:13.5px}
+.check{display:flex;align-items:center;gap:8px;margin:14px 0 18px;font-size:14px;cursor:pointer}
+.check input{width:16px;height:16px;margin:0;accent-color:var(--accent)}
+button{width:100%;min-height:40px;border:1px solid var(--accent);border-radius:6px;background:var(--accent);color:var(--accent-ink);font:inherit;font-weight:500;cursor:pointer}
+button:hover{filter:brightness(1.1)}
+button:focus-visible,.check input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button[disabled]{opacity:.65;cursor:progress}
+.note{margin:22px 0 0;padding-top:16px;border-top:1px solid var(--line);color:var(--muted);font-size:12.5px}
+</style>
+</head>
+<body>
+<main class="card">
+  <h1>Fördermittel-Verteilungsrechner</h1>
+  <p class="sub" id="sub">Der Zugang ist durch ein Passwort geschützt.</p>
+  <form id="f" novalidate>
+    <label class="lbl" for="pw">Passwort</label>
+    <input id="pw" type="password" autocomplete="current-password" autocapitalize="off" autocorrect="off" spellcheck="false" autofocus>
+    <p class="err" id="err" role="alert" hidden></p>
+    <label class="check"><input type="checkbox" id="merken"> Auf diesem Gerät angemeldet bleiben</label>
+    <button type="submit" id="go">Öffnen</button>
+  </form>
+  <noscript><p class="err">Bitte JavaScript aktivieren, um den Rechner zu öffnen.</p></noscript>
+  <p class="note">Die Berechnung läuft vollständig in Ihrem Browser. Eingegebene Daten werden nicht übertragen.</p>
+</main>
+<script type="application/octet-stream" id="daten">/*DATEN*/</script>
+<script>
+(function () {
+  'use strict';
+  // AES-256-GCM, Schlüssel per PBKDF2-SHA-256 aus dem Passwort abgeleitet (Werte setzt build.mjs)
+  var P = /*PARAMETER*/;
+  var KEY = 'foerdermittelrechner.zugang';
+  var form = document.getElementById('f');
+  var pw = document.getElementById('pw');
+  var err = document.getElementById('err');
+  var go = document.getElementById('go');
+  var merken = document.getElementById('merken');
+  var daten = null;
+
+  function ausB64(s) {
+    var bin = atob(s), u = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
+    return u;
+  }
+  function zuB64(u) {
+    var s = '';
+    for (var i = 0; i < u.length; i++) s += String.fromCharCode(u[i]);
+    return btoa(s);
+  }
+  function inhalt() {
+    if (!daten) daten = ausB64(document.getElementById('daten').textContent.trim());
+    return daten;
+  }
+  function ableiten(passwort) {
+    return crypto.subtle.importKey('raw', new TextEncoder().encode(passwort.normalize('NFC')), 'PBKDF2', false, ['deriveBits'])
+      .then(function (basis) {
+        return crypto.subtle.deriveBits({ name: 'PBKDF2', hash: 'SHA-256', salt: ausB64(P.salt), iterations: P.iter }, basis, 256);
+      })
+      .then(function (bits) { return new Uint8Array(bits); });
+  }
+  function entschluesseln(schluessel) {
+    return crypto.subtle.importKey('raw', schluessel, 'AES-GCM', false, ['decrypt'])
+      .then(function (k) { return crypto.subtle.decrypt({ name: 'AES-GCM', iv: ausB64(P.iv) }, k, inhalt()); })
+      .then(function (buf) { return new TextDecoder().decode(buf); });
+  }
+  function oeffnen(html) {
+    document.open();
+    document.write(html);
+    document.close();
+  }
+  function fehler(text) {
+    err.textContent = text;
+    err.hidden = !text;
+    pw.setAttribute('aria-invalid', text ? 'true' : 'false');
+  }
+  function beschaeftigt(an) {
+    go.disabled = an;
+    pw.disabled = an;
+    go.textContent = an ? 'Wird geöffnet …' : 'Öffnen';
+  }
+
+  if (!window.crypto || !crypto.subtle || !window.TextEncoder) {
+    fehler('Dieser Browser kann den Rechner nicht entschlüsseln. Bitte einen aktuellen Browser verwenden.');
+    go.disabled = true;
+    return;
+  }
+
+  var gespeichert = null;
+  try { gespeichert = localStorage.getItem(KEY); } catch (e) { gespeichert = null; }
+  if (gespeichert) {
+    form.hidden = true;
+    document.getElementById('sub').textContent = 'Wird geöffnet …';
+    entschluesseln(ausB64(gespeichert)).then(oeffnen, function () {
+      try { localStorage.removeItem(KEY); } catch (e) { /* ignorieren */ }
+      document.getElementById('sub').textContent = 'Der Zugang ist durch ein Passwort geschützt.';
+      form.hidden = false;
+      pw.focus();
+    });
+  }
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    if (!pw.value) { fehler('Bitte das Passwort eingeben.'); pw.focus(); return; }
+    fehler('');
+    beschaeftigt(true);
+    var schluessel;
+    ableiten(pw.value)
+      .then(function (s) { schluessel = s; return entschluesseln(s); })
+      .then(function (html) {
+        if (merken.checked) { try { localStorage.setItem(KEY, zuB64(schluessel)); } catch (e) { /* ignorieren */ } }
+        oeffnen(html);
+      })
+      .catch(function () {
+        beschaeftigt(false);
+        fehler('Das Passwort ist nicht richtig.');
+        pw.focus();
+        pw.select();
+      });
+  });
+})();
+</script>
+</body>
+</html>
