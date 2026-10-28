@@ -1,13 +1,13 @@
 {
   "name": "foerdermittelrechner-web",
-  "version": "0.8.0",
+  "version": "0.9.0",
   "private": true,
   "description": "Web-Version des Fördermittel-Verteilungsrechners",
   "license": "MIT",
   "type": "module",
   "scripts": {
     "build": "node build.mjs",
-    "test": "python3 test/reference.py && node test/compare.mjs"
+    "test": "python3 test/reference.py && node test/compare.mjs && python3 test/reference_2026.py && node test/compare_2026.mjs"
   },
   "devDependencies": {
     "@fontsource/ibm-plex-mono": "5.1.0",

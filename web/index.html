@@ -19,6 +19,7 @@
   --bar-sockel:#2b5a8d;
   --bar-u3:#8db0d8;
   --bar-auf:#d9962c;
+  --bar-w26:#2f9e8f;
   --track:#e8edf2;
   --warn:#8f5300;
   --warn-soft:#fbf0dc;
@@ -26,6 +27,8 @@
   --ok-soft:#e1f1e7;
   --info:#55459f;
   --info-soft:#ebe8f7;
+  --w26:#0b6a60;
+  --w26-soft:#daefeb;
   --danger:#b3261e;
   --danger-soft:#fbe7e5;
   --shadow:rgba(16,28,42,.22);
@@ -39,8 +42,8 @@
   :root:not([data-theme="light"]){
     --bg:#0e141b; --surface:#151e28; --surface-2:#1a2531; --field:#111922; --ink:#e3e9ef; --muted:#98a6b6;
     --line:#283442; --line-strong:#3a4757; --accent:#88b0e0; --accent-ink:#0e141b; --accent-soft:#1c2d42;
-    --bar-sockel:#88b0e0; --bar-u3:#3d6592; --bar-auf:#d39a3f; --track:#202b37;
-    --warn:#f0b65c; --warn-soft:#33270f; --ok:#74c896; --ok-soft:#15301f; --info:#b3a7f2; --info-soft:#262143;
+    --bar-sockel:#88b0e0; --bar-u3:#3d6592; --bar-auf:#d39a3f; --bar-w26:#3bb3a3; --track:#202b37;
+    --warn:#f0b65c; --warn-soft:#33270f; --ok:#74c896; --ok-soft:#15301f; --info:#b3a7f2; --info-soft:#262143; --w26:#72d4c5; --w26-soft:#11302b;
     --danger:#f2a49c; --danger-soft:#3a1714; --shadow:rgba(0,0,0,.5); --scrim:rgba(0,0,0,.6);
     color-scheme:dark;
   }
@@ -48,8 +51,8 @@
 :root[data-theme="dark"]{
   --bg:#0e141b; --surface:#151e28; --surface-2:#1a2531; --field:#111922; --ink:#e3e9ef; --muted:#98a6b6;
   --line:#283442; --line-strong:#3a4757; --accent:#88b0e0; --accent-ink:#0e141b; --accent-soft:#1c2d42;
-  --bar-sockel:#88b0e0; --bar-u3:#3d6592; --bar-auf:#d39a3f; --track:#202b37;
-  --warn:#f0b65c; --warn-soft:#33270f; --ok:#74c896; --ok-soft:#15301f; --info:#b3a7f2; --info-soft:#262143;
+  --bar-sockel:#88b0e0; --bar-u3:#3d6592; --bar-auf:#d39a3f; --bar-w26:#3bb3a3; --track:#202b37;
+  --warn:#f0b65c; --warn-soft:#33270f; --ok:#74c896; --ok-soft:#15301f; --info:#b3a7f2; --info-soft:#262143; --w26:#72d4c5; --w26-soft:#11302b;
   --danger:#f2a49c; --danger-soft:#3a1714; --shadow:rgba(0,0,0,.5); --scrim:rgba(0,0,0,.6);
   color-scheme:dark;
 }
@@ -124,7 +127,7 @@ h2,.h2{font:600 19px/1.2 var(--font-display);margin:0;text-wrap:balance}
 .note{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 16px;margin:0 0 14px;padding:10px 14px;border-radius:6px;background:var(--info-soft);font-size:14px}
 .note p{margin:0}
 .note.warnnote{background:var(--warn-soft)}
-.addform{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1.15fr) minmax(0,1.15fr) auto;gap:10px;align-items:end}
+.addform{display:grid;grid-template-columns:minmax(0,1.7fr) repeat(3,minmax(0,1fr)) auto;gap:10px;align-items:end}
 .addform-actions{display:flex;gap:8px}
 .addform-error{grid-column:1/-1}
 @media (max-width:680px){
@@ -141,8 +144,8 @@ h2,.h2{font:600 19px/1.2 var(--font-display);margin:0;text-wrap:balance}
 .table-wrap.k{max-height:440px}
 .table-wrap.r{max-height:min(72vh,760px)}
 .tbl{width:100%;border-collapse:separate;border-spacing:0;font-size:14px;font-variant-numeric:tabular-nums}
-.tbl th{position:sticky;top:0;z-index:1;background:var(--surface-2);text-align:left;font-size:11.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:9px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
-.tbl td{padding:7px 12px;border-bottom:1px solid var(--line);vertical-align:middle}
+.tbl th{position:sticky;top:0;z-index:1;background:var(--surface-2);text-align:left;font-size:11.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:9px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+.tbl td{padding:7px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
 .tbl tbody tr:last-child td{border-bottom:0}
 .tbl .r{text-align:right;white-space:nowrap}
 .tbl .name{min-width:130px}
@@ -163,6 +166,8 @@ h2,.h2{font:600 19px/1.2 var(--font-display);margin:0;text-wrap:balance}
 }
 .tbl tfoot td{position:sticky;bottom:0;background:var(--surface-2);border-top:3px double var(--line-strong);border-bottom:0;font-weight:600}
 .tbl .strong{font-weight:600}
+.tbl .nw{white-space:nowrap}
+.muted{color:var(--muted)}
 
 /* Ergebnis */
 .pill{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;font-size:13px;font-weight:500;white-space:nowrap}
@@ -188,15 +193,19 @@ h2,.h2{font:600 19px/1.2 var(--font-display);margin:0;text-wrap:balance}
 .s-sockel{background:var(--bar-sockel)}
 .s-u3{background:var(--bar-u3)}
 .s-auf{background:var(--bar-auf)}
-.dist{position:relative;width:150px;height:10px}
+.s-w26{background:var(--bar-w26)}
+.sw.tick26{width:2px;height:13px;border-radius:0;background:var(--w26)}
+.dist{position:relative;width:110px;height:10px}
 .dist .seg{display:flex;width:100%;height:100%;border-radius:2px;overflow:hidden;background:var(--track)}
 .dist .seg span{height:100%}
 .dist i{position:absolute;top:-3px;bottom:-3px;width:2px;margin-left:-1px;background:var(--ink);opacity:.6}
+.dist i.w{background:var(--w26);opacity:1}
 .chip{display:inline-flex;align-items:center;padding:2px 9px;border-radius:999px;font-size:12.5px;font-weight:500;white-space:nowrap}
-.chips{display:flex;flex-wrap:wrap;gap:4px}
+.chips{display:flex;flex-direction:column;align-items:flex-start;gap:4px}
 .chip-ok{background:var(--ok-soft);color:var(--ok)}
 .chip-min{background:var(--warn-soft);color:var(--warn)}
 .chip-r1{background:var(--info-soft);color:var(--info)}
+.chip-w26{background:var(--w26-soft);color:var(--w26)}
 .chip-adj{background:var(--surface-2);color:var(--muted);box-shadow:inset 0 0 0 1px var(--line)}
 
 /* Protokoll */
@@ -304,6 +313,7 @@ dialog.dlg::backdrop{background:var(--scrim)}
             <div><dt>Summe Wert 2019</dt><dd id="g-wert">0 €</dd></div>
             <div><dt>Summe Sockelbeträge</dt><dd id="g-sockel">–</dd></div>
             <div><dt>Summe Kinder U3</dt><dd id="g-kinder">0</dd></div>
+            <div><dt>Summe Wert 2026</dt><dd id="g-w26">–</dd></div>
           </dl>
         </div>
       </section>
@@ -327,6 +337,7 @@ dialog.dlg::backdrop{background:var(--scrim)}
             <div class="field f-name"><label for="k-name">Kommune</label><input class="input" id="k-name" autocomplete="off" placeholder="z. B. Gemeinde Musterstadt"></div>
             <div class="field"><label for="k-wert">Wert 2019 (€)</label><input class="input num" id="k-wert" inputmode="decimal" autocomplete="off" spellcheck="false"></div>
             <div class="field"><label for="k-kinder">Kinder U3 im SGB-II-Bezug</label><input class="input num" id="k-kinder" inputmode="decimal" autocomplete="off" spellcheck="false"></div>
+            <div class="field"><label for="k-w26">Wert 2026 (€)</label><input class="input num" id="k-w26" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="freiwillig"></div>
             <div class="addform-actions">
               <button class="btn btn-primary" type="submit" id="k-submit">Hinzufügen</button>
               <button class="btn" type="button" id="k-cancel" hidden>Abbrechen</button>
@@ -335,7 +346,7 @@ dialog.dlg::backdrop{background:var(--scrim)}
           </form>
           <div class="table-wrap k">
             <table class="tbl" id="k-table">
-              <thead><tr><th scope="col">Kommune</th><th scope="col" class="r">Wert 2019</th><th scope="col" class="r">Kinder U3</th><th scope="col"><span class="sr">Aktionen</span></th></tr></thead>
+              <thead><tr><th scope="col">Kommune</th><th scope="col" class="r">Wert 2019</th><th scope="col" class="r">Kinder U3</th><th scope="col" class="r">Wert 2026</th><th scope="col"><span class="sr">Aktionen</span></th></tr></thead>
               <tbody id="k-body"></tbody>
             </table>
             <div class="empty" id="k-empty" hidden>Noch keine Kommunen eingetragen. Tragen Sie oben die erste Kommune ein oder importieren Sie eine Excel-Datei.</div>
@@ -370,13 +381,13 @@ dialog.dlg::backdrop{background:var(--scrim)}
             <span><i class="sw s-sockel"></i>Sockelbetrag</span>
             <span><i class="sw s-u3"></i>U3-Anteil</span>
             <span><i class="sw s-auf"></i>Aufstockung auf Mindestbetrag</span>
+            <span id="lg-w26"><i class="sw s-w26"></i>Aufstockung auf Wert 2026</span>
             <span><i class="sw tick"></i>Mindestbetrag</span>
+            <span id="lg-tick26"><i class="sw tick26"></i>Wert 2026</span>
           </div>
           <div class="table-wrap r">
             <table class="tbl" id="r-table">
-              <thead><tr>
-                <th scope="col">Kommune</th><th scope="col" class="r">Wert 2019</th><th scope="col" class="r">Kinder U3</th><th scope="col" class="r">Sockelbetrag</th><th scope="col" class="r">U3-Anteil</th><th scope="col" class="r">Zwischensumme</th><th scope="col" class="r">Endbetrag</th><th scope="col">Verteilung</th><th scope="col">Status</th>
-              </tr></thead>
+              <thead id="r-head"></thead>
               <tbody id="r-body"></tbody>
               <tfoot id="r-foot"></tfoot>
             </table>
@@ -391,7 +402,7 @@ dialog.dlg::backdrop{background:var(--scrim)}
     </details>
 
     <footer class="foot">
-      <p>Fördermittel-Verteilungsrechner · Web-Version 0.8 · © 2025 Marco Benta · MIT-Lizenz</p>
+      <p>Fördermittel-Verteilungsrechner · Web-Version 0.9 · © 2025 Marco Benta · MIT-Lizenz</p>
       <p>Die Berechnung läuft vollständig in Ihrem Browser. Ergebnisse sind nicht rechtsverbindlich und sollten fachlich geprüft werden.</p>
       <button class="btn btn-small" type="button" id="btn-abmelden" hidden>Auf diesem Gerät abmelden</button>
     </footer>
@@ -408,14 +419,15 @@ dialog.dlg::backdrop{background:var(--scrim)}
 Multiplikator = Restbudget ÷ Kinder U3 gesamt
 U3-Anteil = Kinder U3 × Multiplikator</span></p></li>
       <li><h3>Mindestbetrag prüfen, Runde für Runde</h3><p>Liegt die Zwischensumme (Sockelbetrag + U3-Anteil) einer Kommune unter dem Mindestbetrag, wird sie auf den Mindestbetrag festgesetzt. Hatte sie in Runde 1 bereits mindestens den Mindestbetrag erreicht, behält sie stattdessen ihren Wert aus Runde 1. Das übrige Budget wird in der nächsten Runde auf die verbleibenden Kommunen neu verteilt, bis keine Kommune mehr unter den Mindestbetrag fällt (höchstens 10 Runden).</p></li>
-      <li><h3>Runden und ausgleichen</h3><p>Alle Endbeträge werden auf ganze Euro gerundet; Beträge mit genau 50 Cent zur nächsten geraden Zahl. Die Rundungsdifferenz wird bei der Kommune mit dem höchsten Betrag ausgeglichen, sodass die Gesamtsumme exakt eingehalten wird.</p></li>
+      <li><h3>Schlussrunde: Wert 2026</h3><p>Ist für eine Kommune ein Wert 2026 eingetragen, wird nach Abschluss der Runden geprüft, ob sie mindestens diesen Betrag erhält. Liegt sie darunter, wird sie genau auf ihren Wert 2026 festgesetzt. Das übrige Budget wird auf die nicht festgesetzten Kommunen nach demselben Schlüssel neu verteilt. Fällt dabei eine Kommune unter den Mindestbetrag oder ihren Wert 2026, wird sie auf den höheren der beiden Werte festgesetzt und erneut verteilt, bis keine Kommune mehr darunter fällt.</p></li>
+      <li><h3>Runden und ausgleichen</h3><p>Alle Endbeträge werden auf ganze Euro gerundet; Beträge mit genau 50 Cent zur nächsten geraden Zahl. Die Rundungsdifferenz wird bei der Kommune mit dem höchsten Betrag ausgeglichen, die nicht auf ihren Wert 2026 festgesetzt ist, sodass die Gesamtsumme exakt eingehalten wird.</p></li>
     </ol>
     <p style="margin-top:18px"><strong>Beispiel:</strong> Gesamtsumme 500.000 €, Mindestbetrag 12.500 €, Sockelbetrag 50 %.</p>
     <span class="eq">Kommune A: Wert 2019 20.000 €, 10 Kinder U3 → Sockelbetrag 10.000 €
 Kommune B: Wert 2019  5.000 €,  5 Kinder U3 → Sockelbetrag  2.500 €
 Liegt eine Zwischensumme unter 12.500 €, wird die Kommune festgesetzt
 und das Restbudget in Runde 2 auf die übrigen Kommunen verteilt.</span>
-    <p style="margin-top:14px">Der Rechenkern entspricht der Desktop-Version (foerdermittel_rechner.py) und liefert bei gleichen Eingaben dieselben Beträge.</p>
+    <p style="margin-top:14px">Ohne Werte 2026 entspricht der Rechenkern der Desktop-Version (foerdermittel_rechner.py) und liefert bei gleichen Eingaben dieselben Beträge. Die Schlussrunde mit dem Wert 2026 gibt es nur in der Web-Version.</p>
   </div>
   <div class="dlg-foot"><button class="btn btn-primary" type="button" data-close>Verstanden</button></div>
 </dialog>
@@ -427,7 +439,7 @@ und das Restbudget in Runde 2 auf die übrigen Kommunen verteilt.</span>
     <dl class="about-grid">
       <dt>Entwickler</dt><dd>Marco Benta</dd>
       <dt>Kontakt</dt><dd><span class="mono" id="about-mail">marco@dabenta.de</span><button class="btn btn-small" type="button" id="btn-mail-copy">Kopieren</button></dd>
-      <dt>Version</dt><dd>0.8 Web (2026), Rechenkern wie Desktop-Version 0.8</dd>
+      <dt>Version</dt><dd>0.9 Web (2026): Rechenkern wie Desktop-Version 0.8, zusätzlich Schlussrunde Wert 2026</dd>
     </dl>
     <p class="eyebrow">Verwendete Open-Source-Komponenten</p>
     <ul>
@@ -605,6 +617,7 @@ const Rechner = (() => {
   function berechne(kommunen, { gesamtsumme, mindestbetrag, sockelProzent }) {
     const rows = kommunen.map((k) => ({
       name: k.name, wert: k.wert, kinder: k.kinder,
+      w26: Number.isFinite(k.wert2026) ? k.wert2026 : null,
       status: 'In Berechnung', art: 'offen',
       sockel: k.wert * sockelProzent,
       u3: 0, zwischensumme: 0, endbetrag: 0, runde: 0, erste: 0,
@@ -657,7 +670,7 @@ const Rechner = (() => {
       }
       neu.forEach((i) => fixiert.add(i));
       runden.push({
-        runde, aktiv: aktiv.length, verfuegbar, summeSockel, rest, summeU3, mult,
+        runde, typ: 'routine', aktiv: aktiv.length, verfuegbar, summeSockel, rest, summeU3, mult,
         neu: neu.map((i) => ({ name: rows[i].name, art: rows[i].art, betrag: rows[i].endbetrag })),
       });
 
@@ -668,15 +681,84 @@ const Rechner = (() => {
       }
     }
 
-    // Rundung auf ganze Euro und Ausgleich bei der Kommune mit dem höchsten Betrag
+    // Schlussrunde Wert 2026 (nur Web-Version): Nach der Routine erhält keine Kommune weniger
+    // als ihren Wert 2026. Wer darunter liegt, wird genau auf den Wert 2026 festgesetzt; das übrige
+    // Budget wird auf die nicht festgesetzten Kommunen nach demselben Schlüssel neu verteilt.
+    // Fällt dabei eine Kommune unter Mindestbetrag oder Wert 2026, wird sie auf den höheren der
+    // beiden Werte festgesetzt und erneut verteilt, bis keine Kommune mehr darunter fällt.
+    const hat2026 = rows.some((r) => r.w26 !== null);
+    const untergrenze = (r) => (r.w26 !== null && r.w26 > mindestbetrag ? r.w26 : mindestbetrag);
+    if (hat2026) {
+      let r2 = runden.length + 1;
+      let neu = [];
+      rows.forEach((r, i) => {
+        if (r.w26 !== null && r.endbetrag < r.w26) {
+          r.endbetrag = r.w26;
+          r.status = `Fixiert auf Wert 2026 (Runde ${r2})`;
+          r.art = 'w2026';
+          r.runde = r2;
+          fixiert.add(i);
+          neu.push(i);
+        }
+      });
+      runden.push({ runde: r2, typ: 'pruefung', neu: neu.map((i) => ({ name: rows[i].name, art: rows[i].art, betrag: rows[i].endbetrag })) });
+
+      // Endet sicher: Jede weitere Runde setzt mindestens eine Kommune fest.
+      while (neu.length) {
+        r2 += 1;
+        const aktiv = [];
+        const fix = [];
+        rows.forEach((_, i) => (fixiert.has(i) ? fix : aktiv).push(i));
+        if (aktiv.length === 0) break;
+
+        const summeSockel = npSum(aktiv.map((i) => rows[i].sockel));
+        const bereitsFixiert = npSum(fix.map((i) => rows[i].endbetrag));
+        const verfuegbar = gesamtsumme - bereitsFixiert;
+        const rest = verfuegbar - summeSockel;
+        const summeU3 = npSum(aktiv.map((i) => rows[i].kinder));
+        const mult = summeU3 > 0 ? rest / summeU3 : 0;
+
+        neu = [];
+        for (const i of aktiv) {
+          const r = rows[i];
+          r.u3 = r.kinder * mult;
+          r.zwischensumme = r.sockel + r.u3;
+          r.runde = r2;
+          const grenze = untergrenze(r);
+          if (r.zwischensumme < grenze) {
+            r.endbetrag = grenze;
+            if (r.w26 !== null && r.w26 > mindestbetrag) {
+              r.status = `Fixiert auf Wert 2026 (Runde ${r2})`;
+              r.art = 'w2026';
+            } else {
+              r.status = `Fixiert auf Mindestbetrag (Runde ${r2})`;
+              r.art = 'mindest';
+            }
+            fixiert.add(i);
+            neu.push(i);
+          } else {
+            r.endbetrag = r.zwischensumme;
+          }
+        }
+        runden.push({
+          runde: r2, typ: 'neuverteilung', aktiv: aktiv.length, verfuegbar, summeSockel, rest, summeU3, mult,
+          neu: neu.map((i) => ({ name: rows[i].name, art: rows[i].art, betrag: rows[i].endbetrag })),
+        });
+      }
+    }
+
+    // Rundung auf ganze Euro und Ausgleich bei der Kommune mit dem höchsten Betrag.
+    // Auf den Wert 2026 festgesetzte Kommunen werden dabei nicht verändert.
     for (const r of rows) { r.endVorRundung = r.endbetrag; r.endbetrag = rint(r.endbetrag); }
     const summeVor = npSum(rows.map((r) => r.endVorRundung));
     const summeNach = npSum(rows.map((r) => r.endbetrag));
     const differenzRundung = gesamtsumme - summeNach;
     let ausgleich = null;
     if (rows.length && Math.abs(differenzRundung) >= 1) {
-      let maxI = 0;
-      for (let i = 1; i < rows.length; i++) if (rows[i].endbetrag > rows[maxI].endbetrag) maxI = i;
+      let pool = rows.map((_, i) => i).filter((i) => rows[i].art !== 'w2026');
+      if (!pool.length) pool = rows.map((_, i) => i);
+      let maxI = pool[0];
+      for (const i of pool) if (rows[i].endbetrag > rows[maxI].endbetrag) maxI = i;
       const r = rows[maxI];
       const alt = r.endbetrag;
       r.endbetrag += differenzRundung;
@@ -705,6 +787,17 @@ const Rechner = (() => {
       hinweise.push(`${unter.length === 1 ? 'Eine Kommune erhält' : unter.length + ' Kommunen erhalten'} weniger als den Mindestbetrag: ${namen}.` +
         (bedarf > gesamtsumme ? ` Allein die Mindestbeträge (${rows.length} × ${eur0(mindestbetrag)} = ${eur0(bedarf)}) übersteigen die Gesamtsumme.` : ''));
     }
+    if (hat2026) {
+      const unter26 = rows.filter((r) => r.w26 !== null && r.endbetrag < r.w26);
+      if (unter26.length) {
+        const namen = unter26.slice(0, 5).map((r) => `${r.name} (${eur0(r.endbetrag)} statt ${eur0(r.w26)})`).join(', ') + (unter26.length > 5 ? ` und ${unter26.length - 5} weitere` : '');
+        hinweise.push(`${unter26.length === 1 ? 'Eine Kommune liegt' : unter26.length + ' Kommunen liegen'} unter ihrem Wert 2026: ${namen}.`);
+      }
+      const summeGrenzen = npSum(rows.map(untergrenze));
+      if (summeGrenzen > gesamtsumme) {
+        hinweise.push(`Mindestbeträge und Werte 2026 ergeben zusammen ${eur0(summeGrenzen)} und übersteigen die Gesamtsumme. Nicht alle Untergrenzen können eingehalten werden.`);
+      }
+    }
     if (!validierungOk) {
       hinweise.push(`Die verteilte Summe weicht um ${eur2(differenz)} von der Gesamtsumme ab.` +
         (Number.isInteger(gesamtsumme) ? '' : ' Rundungsdifferenzen werden nur in ganzen Euro ausgeglichen. Geben Sie die Gesamtsumme deshalb in ganzen Euro an.'));
@@ -712,7 +805,7 @@ const Rechner = (() => {
 
     return {
       params: { gesamtsumme, mindestbetrag, sockelProzent },
-      rows, runden, abgeschlossen,
+      rows, runden, abgeschlossen, hat2026,
       rundung: { summeVor, summeNach, differenz: differenzRundung, ausgleich },
       validierung: { soll: gesamtsumme, ist, differenz, ok: validierungOk },
       hinweise,
@@ -724,7 +817,9 @@ const Rechner = (() => {
     name: ['kommune', 'name', 'gemeinde', 'stadt'],
     wert: ['wert 2019 (€)', 'wert 2019', 'wert_2019'],
     kinder: ['kinder u3 im sgb-ii-bezug', 'kinder u3', 'kinder_u3', 'u3'],
+    w26: ['wert 2026 (€)', 'wert 2026', 'wert_2026'],
   };
+  const PFLICHT = ['name', 'wert', 'kinder'];
   const SPALTEN_ANZEIGE = { name: 'Kommune', wert: 'Wert 2019 (€)', kinder: 'Kinder U3 im SGB-II-Bezug' };
 
   function zellwert(v) {
@@ -760,13 +855,13 @@ const Rechner = (() => {
             if (prio >= 0 && (!spalten[key] || prio < spalten[key].prio)) spalten[key] = { c, prio };
           }
         });
-        const treffer = Object.keys(spalten).length;
-        if (treffer === 3) return lesZeilen(ws, z, spalten);
+        const treffer = PFLICHT.filter((k) => spalten[k]).length;
+        if (treffer === PFLICHT.length) return lesZeilen(ws, z, spalten);
         if (treffer && (!bester || treffer > bester.treffer)) bester = { treffer, spalten, blatt: ws.name };
       }
     }
     const gefunden = bester ? Object.keys(bester.spalten) : [];
-    const fehlt = Object.keys(SPALTEN).filter((k) => !gefunden.includes(k)).map((k) => `„${SPALTEN_ANZEIGE[k]}“`);
+    const fehlt = PFLICHT.filter((k) => !gefunden.includes(k)).map((k) => `„${SPALTEN_ANZEIGE[k]}“`);
     throw new ImportFehler(bester
       ? `Im Blatt „${bester.blatt}“ fehlen die Spalten ${fehlt.join(' und ')}. Erwartet werden die Spalten „Kommune“, „Wert 2019 (€)“ und „Kinder U3 im SGB-II-Bezug“.`
       : 'In der Datei wurde keine Kopfzeile mit den Spalten „Kommune“, „Wert 2019 (€)“ und „Kinder U3 im SGB-II-Bezug“ gefunden. Am einfachsten verwenden Sie die Import-Vorlage.');
@@ -786,10 +881,20 @@ const Rechner = (() => {
       const wert = rohWert instanceof Date ? null : convertGermanNumber(rohWert);
       const kinder = rohKinder instanceof Date ? null : convertGermanNumber(rohKinder);
       if (wert === null || kinder === null || wert < 0 || kinder < 0) { uebersprungen++; continue; }
+      // Wert 2026 ist freiwillig: leer = keine Untergrenze aus 2026
+      let wert2026 = null;
+      if (spalten.w26) {
+        const roh26 = zellwert(row.getCell(spalten.w26.c).value);
+        if (roh26 !== null && String(roh26).trim() !== '') {
+          wert2026 = roh26 instanceof Date ? null : convertGermanNumber(roh26);
+          if (wert2026 === null || wert2026 < 0) { uebersprungen++; continue; }
+          wert2026 = pyRoundTo(wert2026, 2);
+        }
+      }
       // Die Desktop-Version übernimmt Werte auf Cent und Kinder U3 auf 6 Nachkommastellen
-      kommunen.push({ name, wert: pyRoundTo(wert, 2), kinder: pyRoundTo(kinder, 6) });
+      kommunen.push({ name, wert: pyRoundTo(wert, 2), kinder: pyRoundTo(kinder, 6), wert2026 });
     }
-    return { kommunen, uebersprungen, blatt: ws.name, kopfzeile };
+    return { kommunen, uebersprungen, blatt: ws.name, kopfzeile, mit2026: !!spalten.w26 };
   }
 
   function doppelteNamen(kommunen) {
@@ -833,33 +938,49 @@ const Rechner = (() => {
     ws.getCell('B6').value = 'Sockelbetrag:';
     ws.getCell('C6').value = pyFloatStr(sockelProzent * 100) + '%';
 
+    if (erg.hat2026) {
+      ws.getCell('B7').value = 'Wert 2026:';
+      ws.getCell('C7').value = 'Schlussrunde: keine Kommune unter ihrem Wert 2026';
+    }
+
+    // Spalten wie in der Desktop-Version; „Wert 2026“ nur, wenn Werte 2026 erfasst sind
+    const spalten = [
+      { h: 'Kommune', v: (r) => r.name, w: 20 },
+      { h: 'Wert 2019', v: (r) => r.wert, f: FMT2, w: 15 },
+      { h: 'Kinder U3', v: (r) => r.kinder, w: 12 },
+      ...(erg.hat2026 ? [{ h: 'Wert 2026', v: (r) => r.w26, f: FMT2, w: 15 }] : []),
+      { h: 'Sockelbetrag', v: (r) => r.sockel, f: FMT2, w: 15 },
+      { h: 'U3-Anteil', v: (r) => r.u3, f: FMT2, w: 15 },
+      { h: 'Zwischensumme', v: (r) => r.zwischensumme, f: FMT2, w: 15 },
+      { h: 'Endbetrag (gerundet)', v: (r) => r.endbetrag, f: FMT0, w: 18, fett: true, summe: true },
+      { h: 'Endbetrag vor Rundung', v: (r) => r.endVorRundung, f: FMT2, w: 20, summe: true },
+      { h: 'Status', v: (r) => r.status, w: 30 },
+      { h: 'Runde', v: (r) => r.runde, w: 10 },
+      { h: 'Erste Berechnung', v: (r) => r.erste, f: FMT2, w: 18 },
+    ];
     const start = 9;
-    kopfzeile(ws, start, ['Kommune', 'Wert 2019', 'Kinder U3', 'Sockelbetrag', 'U3-Anteil', 'Zwischensumme',
-      'Endbetrag (gerundet)', 'Endbetrag vor Rundung', 'Status', 'Runde', 'Erste Berechnung']);
+    kopfzeile(ws, start, spalten.map((s) => s.h));
 
     erg.rows.forEach((r, i) => {
       const z = start + 1 + i;
-      const werte = [r.name, r.wert, r.kinder, r.sockel, r.u3, r.zwischensumme, r.endbetrag, r.endVorRundung, r.status, r.runde, r.erste];
-      const formate = [null, FMT2, null, FMT2, FMT2, FMT2, FMT0, FMT2, null, null, FMT2];
-      werte.forEach((v, j) => {
+      spalten.forEach((sp, j) => {
         const c = ws.getCell(z, j + 1);
-        c.value = v; c.border = RAHMEN;
-        if (formate[j]) c.numFmt = formate[j];
+        c.value = sp.v(r); c.border = RAHMEN;
+        if (sp.f) c.numFmt = sp.f;
+        if (sp.fett) c.font = { name: 'Calibri', size: 11, bold: true };
       });
-      ws.getCell(z, 7).font = { name: 'Calibri', size: 11, bold: true };
     });
 
     const s = start + erg.rows.length + 1;
     ws.getCell(s, 1).value = 'SUMME';
     ws.getCell(s, 1).font = { name: 'Calibri', size: 11, bold: true };
-    const sumEnd = npSum(erg.rows.map((r) => r.endbetrag));
-    const sumVor = npSum(erg.rows.map((r) => r.endVorRundung));
-    [[7, sumEnd, FMT0], [8, sumVor, FMT2]].forEach(([col, v, f]) => {
-      const c = ws.getCell(s, col);
-      c.value = v; c.numFmt = f; c.font = { name: 'Calibri', size: 11, bold: true }; c.fill = SUMME_FUELLUNG;
+    spalten.forEach((sp, j) => {
+      if (!sp.summe) return;
+      const c = ws.getCell(s, j + 1);
+      c.value = npSum(erg.rows.map(sp.v)); c.numFmt = sp.f; c.font = { name: 'Calibri', size: 11, bold: true }; c.fill = SUMME_FUELLUNG;
     });
 
-    [20, 15, 12, 15, 15, 15, 18, 20, 30, 10, 18].forEach((w, i) => { ws.getColumn(i + 1).width = w; });
+    spalten.forEach((sp, i) => { ws.getColumn(i + 1).width = sp.w; });
     return wb;
   }
 
@@ -875,12 +996,14 @@ const Rechner = (() => {
     ws.getCell('A3').font = { name: 'Calibri', size: 11, bold: true };
     ws.getCell('A4').value = '1. Tragen Sie die Daten der Kommunen in die Tabelle ein.';
     ws.getCell('A5').value = '2. Speichern Sie die Datei und importieren Sie sie im Programm.';
-    kopfzeile(ws, 8, ['Kommune', 'Wert 2019 (€)', 'Kinder U3 im SGB-II-Bezug']);
+    ws.getCell('A6').value = '3. Die Spalte „Wert 2026 (€)“ ist freiwillig. Ist sie gefüllt, erhält die Kommune mindestens diesen Betrag.';
+    kopfzeile(ws, 8, ['Kommune', 'Wert 2019 (€)', 'Kinder U3 im SGB-II-Bezug', 'Wert 2026 (€)']);
     ws.getCell('A9').value = 'Stadt Beispiel';
     ws.getCell('B9').value = 50000;
     ws.getCell('C9').value = 100;
-    for (let z = 10; z < 30; z++) for (let c = 1; c <= 3; c++) ws.getCell(z, c).border = RAHMEN;
-    ws.getColumn(1).width = 30; ws.getColumn(2).width = 20; ws.getColumn(3).width = 25;
+    ws.getCell('D9').value = 55000;
+    for (let z = 10; z < 30; z++) for (let c = 1; c <= 4; c++) ws.getCell(z, c).border = RAHMEN;
+    ws.getColumn(1).width = 30; ws.getColumn(2).width = 20; ws.getColumn(3).width = 25; ws.getColumn(4).width = 20;
     return wb;
   }
 
@@ -895,20 +1018,23 @@ const Rechner = (() => {
     L.push(`Mindestbetrag: ${eur2(mindestbetrag).replace(' ', ' ')}`);
     L.push(`Sockelbetrag: ${pct}%`);
     L.push('');
-    L.push(`${'Kommune'.padEnd(20)} ${'Wert 2019'.padStart(12)} ${'Kinder U3'.padStart(10)} ${'Endbetrag'.padStart(12)} Status`);
-    L.push('-'.repeat(80));
+    const m26 = erg.hat2026;
+    const w26Text = (r) => (r.w26 === null ? '–' : NF0.format(r.w26));
+    L.push(`${'Kommune'.padEnd(20)} ${'Wert 2019'.padStart(12)} ${'Kinder U3'.padStart(10)} ${m26 ? 'Wert 2026'.padStart(12) + ' ' : ''}${'Endbetrag'.padStart(12)} Status`);
+    L.push('-'.repeat(m26 ? 93 : 80));
     for (const r of erg.rows) {
-      L.push(`${r.name.padEnd(20)} ${NF0.format(r.wert).padStart(12)} ${zahl(r.kinder).padStart(10)} ${NF0.format(r.endbetrag).padStart(12)} ${r.status.replace(/ /g, ' ')}`);
+      L.push(`${r.name.padEnd(20)} ${NF0.format(r.wert).padStart(12)} ${zahl(r.kinder).padStart(10)} ${m26 ? w26Text(r).padStart(12) + ' ' : ''}${NF0.format(r.endbetrag).padStart(12)} ${r.status.replace(/ /g, ' ')}`);
     }
-    L.push('-'.repeat(80));
-    L.push(`${'SUMME'.padEnd(20)} ${''.padEnd(12)} ${''.padEnd(10)} ${NF0.format(npSum(erg.rows.map((r) => r.endbetrag))).padStart(12)}`);
+    L.push('-'.repeat(m26 ? 93 : 80));
+    L.push(`${'SUMME'.padEnd(20)} ${''.padEnd(12)} ${''.padEnd(10)} ${m26 ? ''.padEnd(12) + ' ' : ''}${NF0.format(npSum(erg.rows.map((r) => r.endbetrag))).padStart(12)}`);
     return L.join('\n');
   }
 
+  // Name, Wert 2019, Kinder U3, Wert 2026
   const BEISPIEL = [
-    ['Stadt A', 50000, 120], ['Stadt B', 35000, 85], ['Gemeinde C', 15000, 30], ['Gemeinde D', 8000, 15],
-    ['Stadt E', 45000, 95], ['Gemeinde F', 12000, 25], ['Stadt G', 60000, 140], ['Gemeinde H', 5000, 8],
-    ['Stadt I', 40000, 75], ['Gemeinde J', 18000, 35],
+    ['Stadt A', 50000, 120, 88000], ['Stadt B', 35000, 85, 66500], ['Gemeinde C', 15000, 30, 23000], ['Gemeinde D', 8000, 15, 13800],
+    ['Stadt E', 45000, 95, 72000], ['Gemeinde F', 12000, 25, 21000], ['Stadt G', 60000, 140, 101000], ['Gemeinde H', 5000, 8, 11000],
+    ['Stadt I', 40000, 75, 60000], ['Gemeinde J', 18000, 35, 27500],
   ];
 
   return {
@@ -931,8 +1057,8 @@ const Rechner = (() => {
   const NF_PCT_IN = new Intl.NumberFormat('de-DE', { maximumFractionDigits: 4 });
 
   let nextId = 1;
-  const mitId = (k) => ({ id: nextId++, name: k.name, wert: k.wert, kinder: k.kinder });
-  const beispielKommunen = () => R.BEISPIEL.map(([name, wert, kinder]) => mitId({ name, wert, kinder }));
+  const mitId = (k) => ({ id: nextId++, name: k.name, wert: k.wert, kinder: k.kinder, wert2026: Number.isFinite(k.wert2026) ? k.wert2026 : null });
+  const beispielKommunen = () => R.BEISPIEL.map(([name, wert, kinder, wert2026]) => mitId({ name, wert, kinder, wert2026 }));
 
   const state = {
     params: { gesamt: '500.000', mindest: '12.500', sockel: '50' },
@@ -947,7 +1073,7 @@ const Rechner = (() => {
     try {
       localStorage.setItem(KEY, JSON.stringify({
         params: state.params,
-        kommunen: state.kommunen.map(({ name, wert, kinder }) => ({ name, wert, kinder })),
+        kommunen: state.kommunen.map(({ name, wert, kinder, wert2026 }) => ({ name, wert, kinder, wert2026 })),
         beispiel: state.beispiel,
       }));
     } catch (e) { /* Speicher nicht verfügbar */ }
@@ -961,7 +1087,8 @@ const Rechner = (() => {
       if (!raw) return false;
       const d = JSON.parse(raw);
       if (!d || !Array.isArray(d.kommunen) || !d.params) return false;
-      const ok = (k) => k && typeof k.name === 'string' && Number.isFinite(k.wert) && Number.isFinite(k.kinder);
+      const ok = (k) => k && typeof k.name === 'string' && Number.isFinite(k.wert) && Number.isFinite(k.kinder)
+        && (k.wert2026 === undefined || k.wert2026 === null || Number.isFinite(k.wert2026));
       state.kommunen = d.kommunen.filter(ok).map(mitId);
       for (const key of ['gesamt', 'mindest', 'sockel']) if (typeof d.params[key] === 'string') state.params[key] = d.params[key];
       state.beispiel = !!d.beispiel;
@@ -1142,7 +1269,7 @@ const Rechner = (() => {
   $('form-params').addEventListener('submit', (e) => e.preventDefault());
 
   // ---------- Kommunen ----------
-  const KF = { name: $('k-name'), wert: $('k-wert'), kinder: $('k-kinder') };
+  const KF = { name: $('k-name'), wert: $('k-wert'), kinder: $('k-kinder'), w26: $('k-w26') };
 
   function zeigeKommuneFehler(msg, feld) {
     const e = $('k-error');
@@ -1162,9 +1289,16 @@ const Rechner = (() => {
     if (!Number.isFinite(kinder)) return zeigeKommuneFehler('Kinder U3: bitte eine Zahl eingeben, z. B. 85.', 'kinder');
     if (wert < 0) return zeigeKommuneFehler('Der Wert 2019 darf nicht negativ sein.', 'wert');
     if (kinder < 0) return zeigeKommuneFehler('Die Zahl der Kinder U3 darf nicht negativ sein.', 'kinder');
+    let wert2026 = null;
+    if (KF.w26.value.trim()) {
+      wert2026 = R.parseEingabe(KF.w26.value);
+      if (!Number.isFinite(wert2026)) return zeigeKommuneFehler('Wert 2026: bitte eine Zahl eingeben oder das Feld leer lassen.', 'w26');
+      if (wert2026 < 0) return zeigeKommuneFehler('Der Wert 2026 darf nicht negativ sein.', 'w26');
+      wert2026 = R.pyRoundTo(wert2026, 2);
+    }
     zeigeKommuneFehler('');
     // Wie in der Desktop-Version wird der Wert 2019 auf Cent übernommen
-    const daten = { name, wert: R.pyRoundTo(wert, 2), kinder };
+    const daten = { name, wert: R.pyRoundTo(wert, 2), kinder, wert2026 };
     if (state.editId !== null) {
       const k = state.kommunen.find((x) => x.id === state.editId);
       if (k) Object.assign(k, daten);
@@ -1173,7 +1307,7 @@ const Rechner = (() => {
     } else {
       state.kommunen.push(mitId(daten));
       toast(`„${name}“ hinzugefügt.`);
-      KF.name.value = ''; KF.wert.value = ''; KF.kinder.value = '';
+      KF.name.value = ''; KF.wert.value = ''; KF.kinder.value = ''; KF.w26.value = '';
     }
     state.beispiel = false;
     kommunenGeaendert();
@@ -1187,6 +1321,7 @@ const Rechner = (() => {
     KF.name.value = k.name;
     KF.wert.value = NF_EUR_IN.format(k.wert);
     KF.kinder.value = R.zahl(k.kinder);
+    KF.w26.value = k.wert2026 === null ? '' : NF_EUR_IN.format(k.wert2026);
     $('k-submit').textContent = 'Änderung speichern';
     $('k-cancel').hidden = false;
     zeigeKommuneFehler('');
@@ -1196,7 +1331,7 @@ const Rechner = (() => {
   function abbrechenBearbeiten() {
     if (state.editId === null) return;
     state.editId = null;
-    KF.name.value = ''; KF.wert.value = ''; KF.kinder.value = '';
+    KF.name.value = ''; KF.wert.value = ''; KF.kinder.value = ''; KF.w26.value = '';
     $('k-submit').textContent = 'Hinzufügen';
     $('k-cancel').hidden = true;
     zeigeKommuneFehler('');
@@ -1260,7 +1395,7 @@ const Rechner = (() => {
     $('k-table').hidden = n === 0;
     $('note-beispiel').hidden = !(state.beispiel && n > 0);
     $('k-body').innerHTML = state.kommunen.map((k) => `<tr data-id="${k.id}"${k.id === state.editId ? ' class="editing"' : ''}>
-      <td class="name">${esc(k.name)}</td><td class="r">${R.eur2(k.wert)}</td><td class="r">${R.zahl(k.kinder)}</td>
+      <td class="name">${esc(k.name)}</td><td class="r">${R.eur2(k.wert)}</td><td class="r">${R.zahl(k.kinder)}</td><td class="r">${k.wert2026 === null ? '<span class="muted">–</span>' : R.eur2(k.wert2026)}</td>
       <td class="act"><div class="row-actions">
         <button class="icon-btn" type="button" data-act="edit" aria-label="${esc(k.name)} bearbeiten" title="Bearbeiten"><svg class="ic" aria-hidden="true"><use href="#i-edit"/></svg></button>
         <button class="icon-btn del" type="button" data-act="del" aria-label="${esc(k.name)} löschen" title="Löschen"><svg class="ic" aria-hidden="true"><use href="#i-del"/></svg></button>
@@ -1327,6 +1462,7 @@ const Rechner = (() => {
     const doppelt = R.doppelteNamen(neu);
     if (doppelt.length) hinweise.push(`Mehrfach vorhandene Namen: ${doppelt.slice(0, 6).join(', ')}${doppelt.length > 6 ? ' …' : ''}.`);
     if (neu.some((k) => k.name === 'Stadt Beispiel' && k.wert === 50000 && k.kinder === 100)) hinweise.push('Die Beispielzeile „Stadt Beispiel“ aus der Vorlage ist enthalten.');
+    if (!gelesen.mit2026) hinweise.push('Die Datei enthält keine Spalte „Wert 2026 (€)“. Für diese Kommunen entfällt die Schlussrunde mit dem Wert 2026.');
 
     const anzahl = neu.length === 1 ? 'Eine Kommune' : `${R.zahl(neu.length)} Kommunen`;
     let modus = 'ersetzen';
@@ -1381,6 +1517,10 @@ const Rechner = (() => {
     $('g-wert').textContent = R.eur2(R.npSum(ks.map((k) => k.wert)));
     $('g-kinder').textContent = R.zahl(R.npSum(ks.map((k) => k.kinder)));
     $('g-sockel').textContent = p.errors.sockel ? '–' : R.eur2(R.npSum(ks.map((k) => k.wert * p.werte.sockelProzent)));
+    const mit26 = ks.filter((k) => k.wert2026 !== null);
+    $('g-w26').textContent = mit26.length
+      ? R.eur2(R.npSum(mit26.map((k) => k.wert2026))) + (mit26.length < ks.length ? ` (${R.zahl(mit26.length)} von ${R.zahl(ks.length)})` : '')
+      : '–';
   }
 
   function zeigeLeer(text) {
@@ -1400,14 +1540,17 @@ const Rechner = (() => {
   function balken(r, maxEnd, mindest) {
     const end = Math.max(r.endbetrag, 0);
     const sockel = Math.max(0, Math.min(r.sockel, end));
-    let u3; let auf = 0;
-    if (r.art === 'mindest') { u3 = Math.max(0, Math.min(r.u3, end - sockel)); auf = Math.max(0, end - sockel - u3); }
-    else u3 = Math.max(0, end - sockel);
-    const w = (v) => (v / maxEnd * 100).toFixed(3) + '%';
+    const fest = r.art === 'mindest' || r.art === 'w2026';
+    const u3 = fest ? Math.max(0, Math.min(r.u3, end - sockel)) : Math.max(0, end - sockel);
+    const auf = fest ? Math.max(0, end - sockel - u3) : 0;
+    const w = (v) => (Math.min(v, maxEnd) / maxEnd * 100).toFixed(3) + '%';
     const teile = [`Sockelbetrag ${R.eur0(sockel)}`, `U3-Anteil ${R.eur0(u3)}`];
     if (auf > 0) teile.push(`Aufstockung ${R.eur0(auf)}`);
+    if (r.w26 !== null) teile.push(`Wert 2026 ${R.eur0(r.w26)}`);
     const tick = mindest > 0 && mindest <= maxEnd ? `<i style="left:${w(mindest)}"></i>` : '';
-    return `<div class="dist" role="img" aria-label="${esc(teile.join(', '))}"><div class="seg"><span class="s-sockel" style="width:${w(sockel)}"></span><span class="s-u3" style="width:${w(u3)}"></span>${auf > 0 ? `<span class="s-auf" style="width:${w(auf)}"></span>` : ''}</div>${tick}</div>`;
+    const tick26 = r.w26 !== null && r.w26 > 0 ? `<i class="w" style="left:${w(r.w26)}"></i>` : '';
+    const aufKlasse = r.art === 'w2026' ? 's-w26' : 's-auf';
+    return `<div class="dist" role="img" aria-label="${esc(teile.join(', '))}"><div class="seg"><span class="s-sockel" style="width:${w(sockel)}"></span><span class="s-u3" style="width:${w(u3)}"></span>${auf > 0 ? `<span class="${aufKlasse}" style="width:${w(auf)}"></span>` : ''}</div>${tick}${tick26}</div>`;
   }
 
   function statusChips(r) {
@@ -1415,6 +1558,7 @@ const Rechner = (() => {
       ok: ['chip-ok', 'OK'],
       mindest: ['chip-min', `Mindestbetrag (Runde ${r.runde})`],
       runde1: ['chip-r1', 'Wert aus Runde 1'],
+      w2026: ['chip-w26', `Wert 2026 (Runde ${r.runde})`],
       offen: ['chip-adj', 'In Berechnung'],
     }[r.art] || ['chip-adj', r.status];
     let html = `<span class="chip ${art[0]}">${esc(art[1])}</span>`;
@@ -1427,61 +1571,75 @@ const Rechner = (() => {
     $('r-content').hidden = false;
     $('btn-export').disabled = false;
     $('btn-copy').disabled = false;
-    const { rows, runden, validierung, params } = erg;
+    const { rows, runden, validierung, params, hat2026 } = erg;
     const n = rows.length;
     const nMin = rows.filter((r) => r.art === 'mindest').length;
     const nR1 = rows.filter((r) => r.art === 'runde1').length;
-    const letzte = runden[runden.length - 1];
+    const n26 = rows.filter((r) => r.art === 'w2026').length;
+    const letzte = [...runden].reverse().find((x) => x.typ !== 'pruefung');
+    const schluss = runden.filter((x) => x.typ !== 'routine').length;
 
     const check = $('r-check');
     check.hidden = false;
     if (validierung.ok) { check.className = 'pill pill-ok'; check.textContent = '✓ Gesamtsumme exakt verteilt'; }
     else { check.className = 'pill pill-warn'; check.textContent = `Abweichung ${R.eur2(validierung.differenz)}`; }
 
-    const fest = [nMin ? `${R.zahl(nMin)} auf Mindestbetrag` : '', nR1 ? `${R.zahl(nR1)} mit Wert aus Runde 1` : ''].filter(Boolean).join(', ') || 'keine festgesetzt';
+    const fest = [nMin ? `${R.zahl(nMin)} auf Mindestbetrag` : '', nR1 ? `${R.zahl(nR1)} mit Wert aus Runde 1` : '', n26 ? `${R.zahl(n26)} auf Wert 2026` : ''].filter(Boolean).join(', ') || 'keine festgesetzt';
     const items = [
       ['Verteilt', R.eur0(validierung.ist), `Soll ${R.eur0(params.gesamtsumme)}`],
       ['Kommunen', R.zahl(n), fest],
       ['Durchschnitt', R.eur0(validierung.ist / n), 'je Kommune'],
       ['Mindestbetrag', R.eur0(params.mindestbetrag), `Sockel ${pctText(params.sockelProzent)}`],
       ['Multiplikator', letzte ? R.eur2(letzte.mult) : '–', letzte ? `je Kind U3, Runde ${letzte.runde}` : ''],
-      ['Runden', R.zahl(runden.length), erg.abgeschlossen ? 'abgeschlossen' : 'nicht abgeschlossen'],
+      ['Runden', R.zahl(runden.length), !erg.abgeschlossen ? 'nicht abgeschlossen' : schluss ? `davon ${R.zahl(schluss)} Schlussrunde${schluss > 1 ? 'n' : ''} Wert 2026` : 'abgeschlossen'],
     ];
     $('r-summary').innerHTML = items.map(([dt, dd, small]) => `<div><dt>${dt}</dt><dd>${esc(dd)}<small>${esc(small)}</small></dd></div>`).join('');
 
     $('r-formel').innerHTML = letzte
-      ? `Endbetrag = <b>${esc(pctText(params.sockelProzent))}</b> × Wert 2019 + <b>${esc(R.eur2(letzte.mult))}</b> × Kinder U3, mindestens <b>${esc(R.eur0(params.mindestbetrag))}</b>`
+      ? `Endbetrag = <b>${esc(pctText(params.sockelProzent))}</b> × Wert 2019 + <b>${esc(R.eur2(letzte.mult))}</b> × Kinder U3, mindestens <b>${esc(R.eur0(params.mindestbetrag))}</b>${hat2026 ? ' bzw. der <b>Wert 2026</b>' : ''}`
       : '';
 
     const w = $('r-warnings');
     w.hidden = erg.hinweise.length === 0;
     w.innerHTML = erg.hinweise.map((h) => `<div class="warn"><svg class="ic" aria-hidden="true"><use href="#i-warn"/></svg><p>${esc(h)}</p></div>`).join('');
 
-    const maxEnd = Math.max(1, ...rows.map((r) => r.endbetrag));
+    $('lg-w26').hidden = n26 === 0;
+    $('lg-tick26').hidden = !hat2026;
+    const kopf = ['Kommune', 'Wert 2019', 'Kinder U3', ...(hat2026 ? ['Wert 2026'] : []), 'Sockelbetrag', 'U3-Anteil', 'Zwischensumme', 'Endbetrag', 'Verteilung', 'Status'];
+    $('r-head').innerHTML = `<tr>${kopf.map((h, i) => `<th scope="col"${i > 0 && i < kopf.length - 2 ? ' class="r"' : ''}>${h}</th>`).join('')}</tr>`;
+    const maxEnd = Math.max(1, ...rows.map((r) => r.endbetrag), ...rows.map((r) => r.w26 || 0));
+    const zelle26 = (r) => (hat2026 ? `<td class="r">${r.w26 === null ? '<span class="muted">–</span>' : R.eur0(r.w26)}</td>` : '');
     $('r-body').innerHTML = rows.map((r) => `<tr>
       <td class="name">${esc(r.name)}</td>
       <td class="r">${R.eur0(r.wert)}</td>
-      <td class="r">${R.zahl(r.kinder)}</td>
+      <td class="r">${R.zahl(r.kinder)}</td>${zelle26(r)}
       <td class="r">${R.eur2(r.sockel)}</td>
       <td class="r">${R.eur2(r.u3)}</td>
       <td class="r">${R.eur2(r.zwischensumme)}</td>
       <td class="r strong">${R.eur0(r.endbetrag)}</td>
       <td>${balken(r, maxEnd, params.mindestbetrag)}</td>
       <td>${statusChips(r)}</td></tr>`).join('');
-    $('r-foot').innerHTML = `<tr><td>Summe</td><td class="r">${R.eur0(R.npSum(rows.map((r) => r.wert)))}</td><td class="r">${R.zahl(R.npSum(rows.map((r) => r.kinder)))}</td>
+    const summe26 = hat2026 ? `<td class="r">${R.eur0(R.npSum(rows.filter((r) => r.w26 !== null).map((r) => r.w26)))}</td>` : '';
+    $('r-foot').innerHTML = `<tr><td>Summe</td><td class="r">${R.eur0(R.npSum(rows.map((r) => r.wert)))}</td><td class="r">${R.zahl(R.npSum(rows.map((r) => r.kinder)))}</td>${summe26}
       <td class="r">${R.eur2(R.npSum(rows.map((r) => r.sockel)))}</td><td></td><td></td><td class="r">${R.eur0(validierung.ist)}</td><td></td><td></td></tr>`;
   }
 
   function renderProtokoll(erg) {
     const { runden, rundung, validierung, params } = erg;
     $('p-kurz').textContent = `${R.zahl(runden.length)} ${runden.length === 1 ? 'Runde' : 'Runden'}`;
-    const art = { mindest: 'Mindestbetrag', runde1: 'Wert aus Runde 1' };
-    const zeilen = runden.map((x) => `<tr><td>${x.runde}</td><td class="r">${R.zahl(x.aktiv)}</td><td class="r">${R.eur2(x.verfuegbar)}</td><td class="r">${R.eur2(x.summeSockel)}</td><td class="r">${R.eur2(x.rest)}</td><td class="r">${R.zahl(x.summeU3)}</td><td class="r">${R.eur2(x.mult)}</td><td class="r">${R.zahl(x.neu.length)}</td></tr>`).join('');
-    const fix = runden.filter((x) => x.neu.length).map((x) => `<li><b>Runde ${x.runde}:</b> ${x.neu.map((k) => `${esc(k.name)} (${art[k.art]}, ${esc(R.eur2(k.betrag))})`).join(', ')}</li>`).join('');
+    const art = { mindest: 'Mindestbetrag', runde1: 'Wert aus Runde 1', w2026: 'Wert 2026' };
+    const marke = { routine: '', pruefung: ' · Prüfung 2026', neuverteilung: ' · Neuverteilung' };
+    const strich = '<td class="r"><span class="muted">–</span></td>';
+    const zeilen = runden.map((x) => `<tr><td class="nw">${x.runde}<span class="muted">${marke[x.typ]}</span></td>` +
+      (x.typ === 'pruefung'
+        ? strich.repeat(6)
+        : `<td class="r">${R.zahl(x.aktiv)}</td><td class="r">${R.eur2(x.verfuegbar)}</td><td class="r">${R.eur2(x.summeSockel)}</td><td class="r">${R.eur2(x.rest)}</td><td class="r">${R.zahl(x.summeU3)}</td><td class="r">${R.eur2(x.mult)}</td>`) +
+      `<td class="r">${R.zahl(x.neu.length)}</td></tr>`).join('');
+    const fix = runden.filter((x) => x.neu.length).map((x) => `<li><b>Runde ${x.runde}${x.typ === 'routine' ? '' : ' (Wert 2026)'}:</b> ${x.neu.map((k) => `${esc(k.name)} (${art[k.art]}, ${esc(R.eur2(k.betrag))})`).join(', ')}</li>`).join('');
     const a = rundung.ausgleich;
     $('p-body').innerHTML = `
       <div class="table-wrap"><table class="tbl">
-        <thead><tr><th>Runde</th><th class="r">Aktive Kommunen</th><th class="r">Verfügbares Budget</th><th class="r">Summe Sockelbeträge</th><th class="r">Restbudget für U3</th><th class="r">Kinder U3</th><th class="r">Multiplikator je Kind</th><th class="r">Neu festgesetzt</th></tr></thead>
+        <thead><tr><th>Runde</th><th class="r">Aktiv</th><th class="r">Verfügbares Budget</th><th class="r">Summe Sockel</th><th class="r">Restbudget U3</th><th class="r">Kinder U3</th><th class="r">Multiplikator</th><th class="r">Festgesetzt</th></tr></thead>
         <tbody>${zeilen}</tbody></table></div>
       ${fix ? `<ul class="fixliste">${fix}</ul>` : '<p class="hint" style="margin-top:12px">Keine Kommune musste festgesetzt werden.</p>'}
       <div class="kv">

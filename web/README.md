@@ -20,20 +20,38 @@ Das Passwort selbst steht weder in der Datei noch im Repository.
 ## Funktionen
 
 - Parameter: Gesamtsumme, Mindestbetrag je Kommune, Sockelbetrag in Prozent
-- Kommunen eintragen, bearbeiten und löschen (mit Rückgängig)
+- Kommunen eintragen, bearbeiten und löschen (mit Rückgängig), optional mit Wert 2026
 - Excel-Import (.xlsx) per Auswahl oder Drag & Drop, Import-Vorlage zum Herunterladen
 - Ergebnis mit Übersicht, Verteilungsbalken je Kommune und Berechnungsprotokoll je Runde
 - Excel-Export im Aufbau der Desktop-Version, Ergebnis als Text in die Zwischenablage
+
+## Schlussrunde Wert 2026 (nur Web-Version)
+
+Für jede Kommune kann ein Wert 2026 erfasst werden (Formular oder Import-Spalte „Wert 2026 (€)“, freiwillig).
+Ist er gefüllt, erhält die Kommune am Ende mindestens diesen Betrag:
+
+1. Zuerst läuft die bisherige Berechnung unverändert durch (Sockelbetrag, U3-Anteil, Mindestbetrag-Runden, Runde-1-Regel).
+2. Schlussrunde: Jede Kommune, die danach unter ihrem Wert 2026 liegt, wird genau auf ihren Wert 2026 festgesetzt.
+3. Das übrige Budget wird auf die nicht festgesetzten Kommunen nach demselben Schlüssel (Sockelbetrag + Kinder U3 × Multiplikator)
+   neu verteilt. Fällt dabei eine Kommune unter den höheren Wert aus Mindestbetrag und Wert 2026, wird sie darauf festgesetzt,
+   und es wird erneut verteilt, bis keine Kommune mehr darunter fällt.
+4. Danach wird wie bisher auf ganze Euro gerundet. Die Rundungsdifferenz wird bei der Kommune mit dem höchsten Betrag
+   ausgeglichen, die nicht auf ihren Wert 2026 festgesetzt ist.
+
+Ohne Werte 2026 entfällt die Schlussrunde, und die Ergebnisse entsprechen exakt der Desktop-Version.
 
 ## Gleiche Ergebnisse wie die Desktop-Version
 
 Der Rechenkern ist eine 1:1-Übertragung von `foerdermittel_rechner.py`. Auch die Summation
 (paarweise wie in NumPy/pandas) und die Rundung (bei genau 50 Cent zur geraden Zahl) sind nachgebildet.
-Dadurch liefert die Web-Version bei gleichen Eingaben bitgenau dieselben Beträge.
+Dadurch liefert die Web-Version ohne Werte 2026 bei gleichen Eingaben bitgenau dieselben Beträge.
 Das prüft `npm test`: 38 Fälle (Beispieldaten, Grenzfälle, Zufallsdaten mit bis zu 396 Kommunen) werden
-mit dem Python-Original gerechnet und mit der Web-Version verglichen.
+mit dem Python-Original gerechnet und mit der Web-Version verglichen. Die Schlussrunde Wert 2026 wird
+zusätzlich gegen eine unabhängige Python-Umsetzung geprüft (`test/reference_2026.py`, 21 Fälle).
 
 Unterschiede zur Desktop-Version:
+
+- Die Schlussrunde Wert 2026 (siehe oben).
 
 - Zahlen werden im deutschen Format eingegeben und angezeigt (`500.000` = fünfhunderttausend).
 - Im Status „Wert aus Runde 1 (…)“ steht der Betrag im deutschen Format.
@@ -49,6 +67,7 @@ Unterschiede zur Desktop-Version:
 | `gate.html` | Passwortabfrage, in die `build.mjs` die verschlüsselte Anwendung einsetzt |
 | `test/reference.py` | rechnet die Testfälle mit `foerdermittel_rechner.py` |
 | `test/compare.mjs` | vergleicht die Web-Version bitgenau mit den Python-Ergebnissen |
+| `test/reference_2026.py`, `test/compare_2026.mjs` | dasselbe für die Schlussrunde Wert 2026 |
 
 ## Bauen, prüfen, veröffentlichen
 

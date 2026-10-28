@@ -45,3 +45,4 @@ Thumbs.db
 # Web-Version
 node_modules/
 web/test/reference.json
+web/test/reference_2026.json
